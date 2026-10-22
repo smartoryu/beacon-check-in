@@ -108,15 +108,17 @@ tofu apply tfplan
 
 `terraform.tfvars` is loaded automatically; `-var-file` is redundant.
 
-Check a token before a long debug loop — Cloudflare's verify endpoint is the
-authority:
+Check a token before a long debug loop. Use `/zones`, not
+`/user/tokens/verify`: account-owned tokens (`cfat_...`) return
+`401 / Invalid API Token (1000)` from the verify endpoint even when they work
+perfectly, so that endpoint will send you chasing a phantom.
 
 ```bash
 curl -s -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
-  https://api.cloudflare.com/client/v4/user/tokens/verify \
-  | jq -r '.success, .result.status, (.errors[]?.message)'
-# true / active     -> usable
-# false / Invalid API Token (1000) -> revoked, mistyped, or not a token value
+  https://api.cloudflare.com/client/v4/zones \
+  | jq -r '.success, (.result[]?.name), (.errors[]?.message)'
+# true + playground.my.id -> usable, zone scope correct
+# false + Invalid API Token (1000) -> revoked, mistyped, or not a token value
 ```
 
 A bad token is invisible at `tofu plan` time: the plan is computed locally and

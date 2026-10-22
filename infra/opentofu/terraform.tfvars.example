@@ -28,9 +28,10 @@ cloudflare_zone_id = "0123456789abcdef0123456789abcdef"
 # Cloudflare API token, scoped to playground.my.id with Zone:Read +
 # Zone.DNS:Edit. This file is gitignored, but prefer keeping the secret out of
 # it entirely: export TF_VAR_cloudflare_api_token=... instead.
-# Verify a token with:
+# Check it with /zones -- /user/tokens/verify rejects account-owned `cfat_`
+# tokens even when they are valid:
 #   curl -s -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
-#     https://api.cloudflare.com/client/v4/user/tokens/verify
+#     https://api.cloudflare.com/client/v4/zones
 cloudflare_api_token = "replace-me"
 
 # Optional: create a GCS bucket for OpenTofu state via a separate bootstrap step.
