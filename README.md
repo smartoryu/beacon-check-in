@@ -161,6 +161,21 @@ The registration stores the full advertisement (raw bytes, manufacturer/service 
 | `moon run mobile:build` | Debug APK build |
 | `pnpm compose:up` / `down` / `cleanup` | Local infrastructure |
 
+## Production deployment
+
+The API deployment assets live in [`infra/`](./infra/README.md):
+
+- OpenTofu provisions a GCP `e2-micro` VM, static IP, firewall and Cloudflare DNS.
+- Caddy terminates TLS with the Cloudflare DNS-01 challenge.
+- GitHub Actions runs tests, publishes API + Caddy images to GHCR, and deploys
+  over SSH.
+- PostgreSQL is hosted on Supabase via its session pooler.
+
+See [`infra/README.md`](./infra/README.md) for the complete runbook and the
+GitHub variables/secrets checklist. No credentials are committed; runtime
+configuration comes from the VM `.env`, GitHub secrets, and environment
+variables.
+
 ## API
 
 - OpenAPI docs: `http://localhost:8080/api-docs`
