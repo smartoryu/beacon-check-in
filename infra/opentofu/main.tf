@@ -1,7 +1,3 @@
-data "cloudflare_zone" "api" {
-  name = var.cloudflare_zone_name
-}
-
 data "cloudflare_ip_ranges" "cloudflare" {}
 
 resource "google_compute_address" "api" {
@@ -75,7 +71,7 @@ resource "google_compute_instance" "api" {
 }
 
 resource "cloudflare_record" "api" {
-  zone_id = data.cloudflare_zone.api.id
+  zone_id = var.cloudflare_zone_id
   name    = var.domain
   type    = "A"
   content = google_compute_address.api.address

@@ -52,8 +52,13 @@ This directory contains the API-only production deployment:
 2. Create an API token with:
    - `Zone:Read`
    - `Zone.DNS:Edit` for the zone
-3. Store the token as `CLOUDFLARE_API_TOKEN` (GitHub secret and local env).
-4. The OpenTofu config creates a proxied `A` record. Caddy uses the same token
+3. Store the token as the GitHub secret `CLOUDFLARE_API_TOKEN` and locally as
+   `TF_VAR_cloudflare_api_token` (or in `terraform.tfvars`). The provider reads
+   `var.cloudflare_api_token`; the plain `CLOUDFLARE_API_TOKEN` env var is only
+   used by Caddy's DNS-01 challenge.
+4. Copy the zone ID (zone overview page) into the `CLOUDFLARE_ZONE_ID` GitHub
+   variable and into `terraform.tfvars` as `cloudflare_zone_id`.
+5. The OpenTofu config creates a proxied `A` record. Caddy uses the same token
    for the DNS-01 challenge, so Cloudflare SSL mode should be **Full (strict)**.
 
 ### 4. Supabase
@@ -78,22 +83,45 @@ cp terraform.tfvars.example terraform.tfvars
 $EDITOR terraform.tfvars
 ```
 
-`terraform.tfvars` is gitignored. It contains no secrets, only project IDs,
-region, SSH public key, admin CIDR, and domain values.
+`terraform.tfvars` is gitignored. It holds project IDs, region, SSH public
+key, admin CIDR, domain, and the Cloudflare zone ID. The Cloudflare API token
+is the one secret in play: either keep it in `terraform.tfvars`
+(`cloudflare_api_token`, gitignored) or leave it out and export it as
+`TF_VAR_cloudflare_api_token`.
 
 For local apply, authenticate with Application Default Credentials:
 
 ```bash
+# Only needed if you use a service account instead of `gcloud auth application-default login`
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-export CLOUDFLARE_API_TOKEN=...
+
+# Optional alternative to storing the token in terraform.tfvars
+export TF_VAR_cloudflare_api_token=...
 export TF_STATE_BUCKET=...
 
 tofu init \
   -backend-config="bucket=$TF_STATE_BUCKET" \
   -backend-config="prefix=beacon-check-in/infra"
-tofu plan -var-file=terraform.tfvars -out=tfplan
+tofu plan -out=tfplan
 tofu apply tfplan
 ```
+
+`terraform.tfvars` is loaded automatically; `-var-file` is redundant.
+
+Check a token before a long debug loop — Cloudflare's verify endpoint is the
+authority:
+
+```bash
+curl -s -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+  https://api.cloudflare.com/client/v4/user/tokens/verify \
+  | jq -r '.success, .result.status, (.errors[]?.message)'
+# true / active     -> usable
+# false / Invalid API Token (1000) -> revoked, mistyped, or not a token value
+```
+
+A bad token is invisible at `tofu plan` time: the plan is computed locally and
+only fails once `tofu apply` calls the Cloudflare API (`Authentication error
+(10000)`).
 
 Or run the **Infra OpenTofu** workflow manually.
 
@@ -115,7 +143,8 @@ Repository → Settings → Secrets and variables → Actions.
 | `DEPLOY_USER` | `deploy` |
 | `ADMIN_CIDR` | `203.0.113.10/32` |
 | `API_DOMAIN` | `beacon-check-in-api.playground.my.id` |
-| `CLOUDFLARE_ZONE_NAME` | `playground.my.id` |
+| `CLOUDFLARE_ZONE_NAME` | `playground.my.id` (informational; records key off the ID) |
+| `CLOUDFLARE_ZONE_ID` | `aacb6e1de8db2fb5963a35d6865265f8` |
 
 **Secrets**:
 

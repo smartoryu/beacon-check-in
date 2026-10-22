@@ -22,5 +22,16 @@ domain               = "beacon-check-in-api.playground.my.id"
 cloudflare_zone_name = "playground.my.id"
 cloudflare_proxied   = true
 
+# Zone ID: Cloudflare dashboard -> playground.my.id -> Overview -> Zone ID
+cloudflare_zone_id = "0123456789abcdef0123456789abcdef"
+
+# Cloudflare API token, scoped to playground.my.id with Zone:Read +
+# Zone.DNS:Edit. This file is gitignored, but prefer keeping the secret out of
+# it entirely: export TF_VAR_cloudflare_api_token=... instead.
+# Verify a token with:
+#   curl -s -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+#     https://api.cloudflare.com/client/v4/user/tokens/verify
+cloudflare_api_token = "replace-me"
+
 # Optional: create a GCS bucket for OpenTofu state via a separate bootstrap step.
 # State bucket is passed to `tofu init -backend-config`, not stored here.

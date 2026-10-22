@@ -48,6 +48,7 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
           TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_ZONE_ID }}
           DEPLOY_SSH_PUBLIC_KEY: ${{ secrets.DEPLOY_SSH_PUBLIC_KEY }}
           ADMIN_CIDR: ${{ vars.ADMIN_CIDR }}
           GCP_WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -57,11 +58,11 @@ jobs:
           gcp_ok=false
           if [ -n "$GCP_WIF_PROVIDER" ] && [ -n "$GCP_SERVICE_ACCOUNT" ]; then gcp_ok=true; fi
           if [ -n "$GCP_SA_KEY" ]; then gcp_ok=true; fi
-          if [ -n "$GCP_PROJECT_ID" ] && [ -n "$TF_STATE_BUCKET" ] && [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$DEPLOY_SSH_PUBLIC_KEY" ] && [ -n "$ADMIN_CIDR" ] && [ "$gcp_ok" = true ]; then
+          if [ -n "$GCP_PROJECT_ID" ] && [ -n "$TF_STATE_BUCKET" ] && [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ZONE_ID" ] && [ -n "$DEPLOY_SSH_PUBLIC_KEY" ] && [ -n "$ADMIN_CIDR" ] && [ "$gcp_ok" = true ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::OpenTofu skipped: configure GCP credentials, TF_STATE_BUCKET, CLOUDFLARE_API_TOKEN, DEPLOY_SSH_PUBLIC_KEY and ADMIN_CIDR."
+            echo "::notice::OpenTofu skipped: configure GCP credentials, TF_STATE_BUCKET, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID, DEPLOY_SSH_PUBLIC_KEY and ADMIN_CIDR."
           fi
 
   plan:
@@ -128,6 +129,8 @@ jobs:
           TF_VAR_admin_cidr: ${{ vars.ADMIN_CIDR }}
           TF_VAR_domain: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
           TF_VAR_cloudflare_zone_name: ${{ vars.CLOUDFLARE_ZONE_NAME || 'playground.my.id' }}
+          TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_proxied: "true"
         run: tofu plan -input=false -out=tfplan
 
@@ -195,6 +198,8 @@ jobs:
           TF_VAR_admin_cidr: ${{ vars.ADMIN_CIDR }}
           TF_VAR_domain: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
           TF_VAR_cloudflare_zone_name: ${{ vars.CLOUDFLARE_ZONE_NAME || 'playground.my.id' }}
+          TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_proxied: "true"
         run: tofu plan -input=false -out=tfplan
 
@@ -212,5 +217,7 @@ jobs:
           TF_VAR_admin_cidr: ${{ vars.ADMIN_CIDR }}
           TF_VAR_domain: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
           TF_VAR_cloudflare_zone_name: ${{ vars.CLOUDFLARE_ZONE_NAME || 'playground.my.id' }}
+          TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_proxied: "true"
         run: tofu apply -input=false -auto-approve tfplan

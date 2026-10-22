@@ -4,5 +4,8 @@ provider "google" {
   zone    = var.gcp_zone
 }
 
-# The Cloudflare provider reads CLOUDFLARE_API_TOKEN from the environment.
-provider "cloudflare" {}
+# Token comes from terraform.tfvars (var.cloudflare_api_token), which takes
+# precedence over the CLOUDFLARE_API_TOKEN environment variable.
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}

@@ -63,9 +63,21 @@ variable "domain" {
 }
 
 variable "cloudflare_zone_name" {
-  description = "Cloudflare zone that contains the API hostname."
+  description = "Cloudflare zone name. Informational only; records key off cloudflare_zone_id."
   type        = string
   default     = "playground.my.id"
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID that contains the API hostname."
+  type        = string
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token with Zone:Read + Zone.DNS:Edit. When null, the provider falls back to CLOUDFLARE_API_TOKEN."
+  type        = string
+  sensitive   = true
+  default     = null
 }
 
 variable "cloudflare_proxied" {
