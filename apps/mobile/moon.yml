@@ -1,0 +1,43 @@
+# https://moonrepo.dev/docs/config/project
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+layer: application
+language: other
+toolchains:
+  default: system
+stack: frontend
+tags: ['app', 'mobile']
+
+id: mobile
+
+project:
+  title: 'mobile'
+  description: 'Beacon Check-In Flutter app'
+
+tasks:
+  pub-get:
+    command: 'flutter pub get'
+    options:
+      cache: false
+
+  dev:
+    command: 'flutter run'
+    options:
+      cache: false
+      interactive: true
+
+  test:
+    command: 'flutter test'
+    options:
+      cache: false
+
+  analyze:
+    command: 'flutter analyze'
+    options:
+      cache: false
+
+  build:
+    command: 'flutter build apk --debug'
+    options:
+      cache: false
