@@ -1,0 +1,146 @@
+name: API Deploy
+
+on:
+  workflow_run:
+    workflows: ["API Release"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (e.g. sha-abc1234). Defaults to the current commit."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: api-deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  API_DOMAIN: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
+
+jobs:
+  deploy:
+    name: Deploy API to GCP
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: production
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="sha-${TARGET_SHA::7}"
+          fi
+          echo "IMAGE_TAG=$tag" >> "$GITHUB_ENV"
+          echo "DEPLOY_SHA=$TARGET_SHA" >> "$GITHUB_ENV"
+
+      - name: Prepare SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          VM_HOST: ${{ secrets.VM_HOST }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "${DEPLOY_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Write runtime env file
+        env:
+          API_ENV_FILE: ${{ secrets.API_ENV_FILE }}
+          GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-api:${{ env.IMAGE_TAG }}
+          GHCR_CADDY_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-caddy:${{ env.IMAGE_TAG }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s\n' "$API_ENV_FILE" > /tmp/beacon-check-in.env
+          {
+            echo "GHCR_IMAGE=$GHCR_IMAGE"
+            echo "GHCR_CADDY_IMAGE=$GHCR_CADDY_IMAGE"
+          } >> /tmp/beacon-check-in.env
+          # Catch an accidentally empty/malformed secret before touching the VM.
+          grep -q '^DATABASE_URL=' /tmp/beacon-check-in.env
+          grep -q '^JWT_SECRET_KEY=' /tmp/beacon-check-in.env
+          grep -q '^GHCR_IMAGE=' /tmp/beacon-check-in.env
+
+      - name: Copy deployment files and env
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_PORT: ${{ secrets.VM_PORT }}
+        run: |
+          set -euo pipefail
+          port="${VM_PORT:-22}"
+          ssh -i ~/.ssh/deploy_key -p "$port" "$VM_USER@$VM_HOST" \
+            "mkdir -p /opt/beacon-check-in && chmod 700 /opt/beacon-check-in"
+          scp -i ~/.ssh/deploy_key -P "$port" \
+            infra/deploy/docker-compose.yml \
+            infra/deploy/Caddyfile \
+            "$VM_USER@$VM_HOST:/opt/beacon-check-in/"
+          scp -i ~/.ssh/deploy_key -P "$port" \
+            /tmp/beacon-check-in.env \
+            "$VM_USER@$VM_HOST:/opt/beacon-check-in/.env"
+          ssh -i ~/.ssh/deploy_key -p "$port" "$VM_USER@$VM_HOST" \
+            "chmod 600 /opt/beacon-check-in/.env"
+
+      - name: Pull, migrate, bootstrap and restart
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_PORT: ${{ secrets.VM_PORT }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          port="${VM_PORT:-22}"
+          # The token is sent over stdin, not embedded in the remote command.
+          printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key -p "$port" "$VM_USER@$VM_HOST" \
+            "docker login ghcr.io -u '$GHCR_USER' --password-stdin && \
+             cd /opt/beacon-check-in && \
+             docker compose pull && \
+             docker compose run --rm api migrate:up && \
+             docker compose run --rm api bootstrap:admin && \
+             docker compose up -d --remove-orphans && \
+             docker image prune -f"
+
+      - name: Verify HTTPS health
+        env:
+          API_DOMAIN: ${{ env.API_DOMAIN }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' "https://$API_DOMAIN/healthz" || true)"
+            if [ "$code" = "200" ]; then
+              echo "API health check passed on attempt $attempt"
+              exit 0
+            fi
+            echo "Attempt $attempt: HTTP $code"
+            sleep 5
+          done
+          echo "API did not become healthy in time"
+          exit 1
