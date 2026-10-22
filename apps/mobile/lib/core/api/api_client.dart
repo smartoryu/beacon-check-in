@@ -19,7 +19,10 @@ class ApiClient {
                 connectTimeout: const Duration(seconds: 12),
                 receiveTimeout: const Duration(seconds: 20),
                 sendTimeout: const Duration(seconds: 20),
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'BeaconCheckIn/1.0 (mobile)',
+                },
               ),
             ) {
     _refreshDio = Dio(
@@ -27,7 +30,10 @@ class ApiClient {
         baseUrl: AppConfig.apiBaseUrl,
         connectTimeout: const Duration(seconds: 12),
         receiveTimeout: const Duration(seconds: 20),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'BeaconCheckIn/1.0 (mobile)',
+                },
       ),
     );
     _dio.interceptors.add(
