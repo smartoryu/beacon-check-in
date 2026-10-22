@@ -25,15 +25,38 @@ env:
   API_DOMAIN: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
 
 jobs:
+  preflight:
+    name: Check deployment secrets
+    runs-on: ubuntu-24.04
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Check required secrets
+        id: check
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          API_ENV_FILE: ${{ secrets.API_ENV_FILE }}
+        run: |
+          if [ -n "$DEPLOY_SSH_KEY" ] && [ -n "$VM_HOST" ] && [ -n "$VM_USER" ] && [ -n "$API_ENV_FILE" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deployment skipped: set DEPLOY_SSH_KEY, VM_HOST, VM_USER and API_ENV_FILE first."
+          fi
+
   deploy:
     name: Deploy API to GCP
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: production
+    needs: preflight
     if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main')
+      needs.preflight.outputs.ready == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main'))
 
     steps:
       - name: Checkout
