@@ -24,6 +24,7 @@ CREATE OR REPLACE FUNCTION public.uuidv7()
 RETURNS uuid
 LANGUAGE plpgsql
 VOLATILE
+SET search_path = public, extensions
 AS $$
 DECLARE
     unix_ts_ms bytea;
