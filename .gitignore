@@ -156,3 +156,6 @@ id_ed25519
 id_ed25519.pub
 id_rsa
 id_rsa.pub
+
+# Commit the OpenTofu provider lock file for reproducible plans
+!infra/opentofu/.terraform.lock.hcl
