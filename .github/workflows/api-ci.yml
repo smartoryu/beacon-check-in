@@ -12,6 +12,7 @@ on:
       - "apps/api/**"
       - "infra/deploy/**"
       - ".github/workflows/api-ci.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
