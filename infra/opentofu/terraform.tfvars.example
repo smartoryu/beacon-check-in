@@ -1,0 +1,26 @@
+# Non-secret OpenTofu variables.
+# Copy to terraform.tfvars (ignored by git) and fill in real values.
+# GCP credentials are supplied through GOOGLE_APPLICATION_CREDENTIALS or
+# Workload Identity, never through this file.
+
+gcp_project_id = "your-gcp-project-id"
+gcp_region     = "us-central1"
+gcp_zone       = "us-central1-a"
+
+instance_name = "beacon-check-in-api"
+machine_type  = "e2-micro"
+disk_size_gb  = 30
+image_family  = "ubuntu-2404-lts-amd64"
+
+# SSH access. Use a dedicated deploy key and restrict port 22.
+ssh_user       = "deploy"
+ssh_public_key = "ssh-ed25519 AAAA... deploy@example.com"
+admin_cidr     = "203.0.113.10/32"
+
+# Cloudflare DNS
+domain               = "beacon-check-in-api.playground.my.id"
+cloudflare_zone_name = "playground.my.id"
+cloudflare_proxied   = true
+
+# Optional: create a GCS bucket for OpenTofu state via a separate bootstrap step.
+# State bucket is passed to `tofu init -backend-config`, not stored here.

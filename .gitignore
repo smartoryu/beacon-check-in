@@ -136,3 +136,23 @@ TODO.md
 
 # Expo
 .expo
+
+# Deployment secrets, OpenTofu state, and keys
+.env.deploy
+.env.deploy.*
+infra/deploy/.env
+infra/deploy/.env.*
+!infra/deploy/.env.example
+infra/opentofu/.terraform/
+infra/opentofu/*.tfstate
+infra/opentofu/*.tfstate.*
+infra/opentofu/*.tfplan
+infra/opentofu/*.tfvars
+!infra/opentofu/*.tfvars.example
+infra/deploy/keys/
+*.pem
+*.key
+id_ed25519
+id_ed25519.pub
+id_rsa
+id_rsa.pub
