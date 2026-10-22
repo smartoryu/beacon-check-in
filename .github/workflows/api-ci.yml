@@ -53,7 +53,7 @@ jobs:
 
       - name: Test
         working-directory: apps/api
-        run: go test ./internal/... ./modules/... ./pkg/... -count=1 -timeout 15m
+        run: go test -p 1 ./internal/... ./modules/... ./pkg/... -count=1 -timeout 20m
 
       - name: Build production binary
         working-directory: apps/api
