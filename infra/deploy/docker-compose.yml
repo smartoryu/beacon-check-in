@@ -1,0 +1,40 @@
+name: beacon-check-in-api
+
+services:
+  api:
+    image: ${GHCR_IMAGE:-ghcr.io/smartoryu/beacon-check-in-api:latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "8080"
+    networks:
+      - api
+
+  caddy:
+    image: ${GHCR_CADDY_IMAGE:-ghcr.io/smartoryu/beacon-check-in-caddy:latest}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - api
+
+networks:
+  api:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
