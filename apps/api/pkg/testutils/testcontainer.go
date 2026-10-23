@@ -54,7 +54,9 @@ func (te *TestEnv) SetupPostgres() (*pgxpool.Pool, string, error) {
 				"POSTGRES_USER":     "testuser",
 				"POSTGRES_DB":       "testdb",
 			},
-			WaitingFor: wait.ForListeningPort("5432/tcp").WithStartupTimeout(120 * time.Second),
+			WaitingFor: wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(120 * time.Second),
 		},
 		Started: true,
 	})
