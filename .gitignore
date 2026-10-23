@@ -161,3 +161,8 @@ id_rsa.pub
 
 # Commit the OpenTofu provider lock file for reproducible plans
 !infra/opentofu/.terraform.lock.hcl
+
+# Firebase client/config files (generated from .env or downloaded from console)
+apps/mobile/android/app/google-services.json
+apps/mobile/ios/Runner/GoogleService-Info.plist
+apps/mobile/lib/firebase_options.dart

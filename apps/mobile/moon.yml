@@ -22,7 +22,7 @@ tasks:
       cache: false
 
   dev:
-    command: 'flutter run'
+    command: './scripts/run.sh'
     options:
       cache: false
       interactive: true
@@ -38,6 +38,17 @@ tasks:
       cache: false
 
   build:
+    command: './scripts/build-apk.sh'
+    options:
+      cache: false
+
+  build-debug:
     command: 'flutter build apk --debug'
     options:
       cache: false
+
+  distribute:
+    command: './scripts/distribute.sh'
+    options:
+      cache: false
+      interactive: true

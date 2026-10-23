@@ -58,11 +58,12 @@ moon run api:run -- migrate:reset --up --seed --force
 moon run api:dev        # API on http://localhost:8080
 moon run web:dev        # web on http://localhost:3000
 
-# 6. Mobile (Android emulator default API URL is http://10.0.2.2:8080/api/v1)
+# 6. Mobile
 cd apps/mobile
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1
-# iOS simulator:
-# flutter run --dart-define=API_BASE_URL=http://localhost:8080/api/v1
+cp .env.example .env      # fill in Firebase/App Distribution values
+./scripts/run.sh          # loads .env and runs flutter run
+# Android emulator uses API_BASE_URL from .env; override with:
+# API_BASE_URL=http://10.0.2.2:8080/api/v1 ./scripts/run.sh
 ```
 
 ## Seeded accounts
@@ -156,9 +157,12 @@ The registration stores the full advertisement (raw bytes, manufacturer/service 
 | `moon run web:typecheck` | TypeScript check |
 | `moon run web:build` | Web production build |
 | `moon run mobile:pub-get` | Flutter dependency install |
+| `moon run mobile:dev` | Run the app using `apps/mobile/.env` |
 | `moon run mobile:analyze` | Flutter analyzer |
 | `moon run mobile:test` | Flutter tests |
-| `moon run mobile:build` | Debug APK build |
+| `moon run mobile:build` | Release APK build |
+| `moon run mobile:build-debug` | Debug APK build |
+| `moon run mobile:distribute` | Build + upload to Firebase App Distribution |
 | `pnpm compose:up` / `down` / `cleanup` | Local infrastructure |
 
 ## Production deployment
