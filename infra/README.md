@@ -175,7 +175,7 @@ This secret is the complete runtime `.env` for the VM. Start from
 ```dotenv
 DOMAIN=beacon-check-in-api.playground.my.id
 WEB_DOMAIN=admin-beacon-check-in.playground.my.id
-CORS_ORIGINS=[https://admin-beacon-check-in.playground.my.id]
+CORS_ORIGINS=https://admin-beacon-check-in.playground.my.id
 ACME_EMAIL=you@example.com
 CLOUDFLARE_API_TOKEN=...
 APP_MODE=production
