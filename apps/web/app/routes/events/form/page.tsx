@@ -332,7 +332,7 @@ function EventForm({
 					<CardHeader>
 						<div className="flex items-center justify-between">
 							<h2 className="font-semibold text-gray-900 dark:text-white">Beacons</h2>
-							<span className="text-gray-500 text-sm">
+							<span className="text-gray-500 text-sm dark:text-gray-400">
 								{selectedBeacons.length} selected
 							</span>
 						</div>
@@ -361,13 +361,13 @@ function EventForm({
 												<div className="font-medium text-gray-900 text-sm dark:text-white">
 													{beacon.label}
 												</div>
-												<div className="font-mono text-gray-500 text-xs">
+												<div className="font-mono text-gray-500 text-xs dark:text-gray-400">
 													{beacon.identity_key}
 												</div>
 											</div>
 											{selected ? (
 												<div className="flex items-center gap-2">
-													<label className="text-gray-500 text-xs">x</label>
+													<label className="text-gray-500 text-xs dark:text-gray-400">x</label>
 													<Input
 														type="number"
 														min="0"
@@ -379,7 +379,7 @@ function EventForm({
 															updatePlacement(beacon.id, { x: Number(e.target.value) })
 														}
 													/>
-													<label className="text-gray-500 text-xs">y</label>
+													<label className="text-gray-500 text-xs dark:text-gray-400">y</label>
 													<Input
 														type="number"
 														min="0"

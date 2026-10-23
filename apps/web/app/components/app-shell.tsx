@@ -8,6 +8,7 @@ import {
 	ShieldCheck,
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router";
+import { ThemeToggle } from "#/components/theme-toggle";
 import { clearAuth } from "#/lib/auth";
 import type { User } from "#/lib/types";
 import { Badge, Button, Skeleton, cn } from "./ui";
@@ -57,7 +58,7 @@ export function AppShell({
 							<div className="font-bold text-gray-900 text-sm dark:text-white">
 								Beacon Check-In
 							</div>
-							<div className="text-gray-500 text-xs">Admin console</div>
+							<div className="text-gray-500 text-xs dark:text-gray-400">Admin console</div>
 						</div>
 					</Link>
 					<nav className="flex-1 space-y-1 px-3 py-2">
@@ -108,19 +109,22 @@ export function AppShell({
 							<div className="truncate font-medium text-gray-900 text-sm dark:text-white">
 								{me.display_name}
 							</div>
-							<div className="truncate text-gray-500 text-xs">{me.email}</div>
+							<div className="truncate text-gray-500 text-xs dark:text-gray-400">{me.email}</div>
 							<Badge variant={isSuper ? "purple" : "blue"} className="mt-2">
 								{roleLabel(me.role)}
 							</Badge>
 						</div>
-						<Button variant="secondary" size="sm" className="w-full" onClick={logout}>
-							<LogOut className="h-4 w-4" /> Sign out
-						</Button>
+						<div className="flex gap-2">
+							<ThemeToggle className="shrink-0" />
+							<Button variant="secondary" size="sm" className="flex-1" onClick={logout}>
+								<LogOut className="h-4 w-4" /> Sign out
+							</Button>
+						</div>
 					</div>
 				</div>
 			</aside>
 
-			<div className="lg:pl-64">
+			<div className="min-w-0 lg:pl-64">
 				<header className="sticky top-0 z-20 flex items-center justify-between border-gray-200 border-b bg-white/90 px-4 py-3 backdrop-blur lg:hidden dark:border-gray-800 dark:bg-gray-900/90">
 					<Link to="/dashboard" className="flex items-center gap-2">
 						<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
@@ -130,9 +134,12 @@ export function AppShell({
 							Beacon Check-In
 						</span>
 					</Link>
-					<div className="flex items-center gap-2">
-						<Badge variant={isSuper ? "purple" : "blue"}>{roleLabel(me.role)}</Badge>
-						<Button variant="ghost" size="sm" onClick={logout}>
+					<div className="flex items-center gap-1.5">
+						<ThemeToggle />
+						<span className="hidden sm:inline-flex">
+							<Badge variant={isSuper ? "purple" : "blue"}>{roleLabel(me.role)}</Badge>
+						</span>
+						<Button variant="ghost" size="sm" onClick={logout} aria-label="Sign out">
 							<LogOut className="h-4 w-4" />
 						</Button>
 					</div>
@@ -156,7 +163,7 @@ export function AppShell({
 						</NavLink>
 					))}
 				</nav>
-				<main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+				<main className="mx-auto min-w-0 max-w-7xl px-3 py-5 sm:px-6 sm:py-6 lg:px-8">{children}</main>
 			</div>
 		</div>
 	);
@@ -179,7 +186,7 @@ export function AppShellSkeleton() {
 					))}
 				</div>
 			</aside>
-			<div className="lg:pl-64">
+			<div className="min-w-0 lg:pl-64">
 				<div className="border-gray-200 border-b bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
 					<Skeleton className="h-6 w-40" />
 				</div>

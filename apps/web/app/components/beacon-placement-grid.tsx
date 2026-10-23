@@ -113,7 +113,7 @@ export function BeaconPlacementGrid({
 								<span className="mt-1 max-w-28 truncate rounded bg-white/90 px-1.5 py-0.5 font-medium text-[10px] text-gray-700 shadow-sm dark:bg-gray-900/90 dark:text-gray-200">
 									{beacon.label}
 								</span>
-								<span className="text-[9px] text-gray-500">
+								<span className="text-[9px] text-gray-500 dark:text-gray-400">
 									{beacon.x.toFixed(1)}, {beacon.y.toFixed(1)} m
 								</span>
 							</button>

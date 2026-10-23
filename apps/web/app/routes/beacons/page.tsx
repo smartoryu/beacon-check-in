@@ -210,7 +210,7 @@ export default function BeaconsPage() {
 						/>
 					) : (
 						<div className="overflow-x-auto">
-							<table className="w-full text-left text-sm">
+							<table className="w-full min-w-[720px] text-left text-sm">
 								<thead className="text-gray-500 text-xs uppercase dark:text-gray-400">
 									<tr>
 										<th className="pb-2">Label</th>
@@ -246,7 +246,7 @@ export default function BeaconsPage() {
 												</Badge>
 											</td>
 											<td className="py-2">
-												<div className="flex justify-end gap-1">
+												<div className="flex flex-wrap justify-end gap-1">
 													<Button variant="ghost" size="sm" onClick={() => openDetail(beacon)}>
 														Details
 													</Button>
@@ -385,17 +385,17 @@ export default function BeaconsPage() {
 				{modal?.type === "detail" ? (
 					<div className="space-y-4">
 						<div className="grid grid-cols-2 gap-2 text-sm">
-							<div className="text-gray-500">Identity</div>
+							<div className="text-gray-500 dark:text-gray-400">Identity</div>
 							<div className="font-mono text-xs">{modal.beacon.identity_key}</div>
-							<div className="text-gray-500">Local name</div>
+							<div className="text-gray-500 dark:text-gray-400">Local name</div>
 							<div>{modal.beacon.local_name || "—"}</div>
-							<div className="text-gray-500">Device id</div>
+							<div className="text-gray-500 dark:text-gray-400">Device id</div>
 							<div className="font-mono text-xs">{modal.beacon.platform_device_id || "—"}</div>
-							<div className="text-gray-500">TX power</div>
+							<div className="text-gray-500 dark:text-gray-400">TX power</div>
 							<div>{modal.beacon.tx_power ?? "—"}</div>
-							<div className="text-gray-500">Registered</div>
+							<div className="text-gray-500 dark:text-gray-400">Registered</div>
 							<div>{formatDateTime(modal.beacon.registered_at)}</div>
-							<div className="text-gray-500">Last seen</div>
+							<div className="text-gray-500 dark:text-gray-400">Last seen</div>
 							<div>{formatDateTime(modal.beacon.last_seen_at)}</div>
 						</div>
 						<div>
@@ -413,7 +413,7 @@ export default function BeaconsPage() {
 						<div>
 							<div className="mb-1 font-medium text-sm">Event usage</div>
 							{usage.length === 0 ? (
-								<p className="text-gray-500 text-sm">Not attached to any event.</p>
+								<p className="text-gray-500 text-sm dark:text-gray-400">Not attached to any event.</p>
 							) : (
 								<ul className="space-y-1 text-sm">
 									{usage.map((item) => (

@@ -156,7 +156,7 @@ export default function ApprovalsPage() {
 						<p className="text-gray-500 text-sm dark:text-gray-400">No reviewed requests yet.</p>
 					) : (
 						<div className="overflow-x-auto">
-							<table className="w-full text-left text-sm">
+							<table className="w-full min-w-[720px] text-left text-sm">
 								<thead className="text-gray-500 text-xs uppercase dark:text-gray-400">
 									<tr>
 										<th className="pb-2">Beacon</th>

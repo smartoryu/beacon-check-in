@@ -3,7 +3,7 @@
 @import "./colors.css";
 
 @plugin "tailwindcss-motion";
-/* @variant dark (&:where([data-theme="dark"] *)); */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @source "../../../../packages/shared-ui/**/*.{ts,tsx}";
 
@@ -111,6 +111,12 @@
 	html,
 	body {
 		@apply antialiased min-h-screen scroll-smooth;
+	}
+	html {
+		color-scheme: light;
+	}
+	html.dark {
+		color-scheme: dark;
 	}
 	body {
 		@apply bg-background text-foreground font-sans;

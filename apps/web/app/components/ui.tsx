@@ -150,7 +150,7 @@ export function Card({
 	return (
 		<div
 			className={cn(
-				"rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900",
+				"min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900",
 				className,
 			)}
 			{...props}
@@ -162,14 +162,14 @@ export function CardHeader({
 	className,
 	...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-	return <div className={cn("border-gray-100 border-b px-5 py-4 dark:border-gray-800", className)} {...props} />;
+	return <div className={cn("min-w-0 border-gray-100 border-b px-5 py-4 dark:border-gray-800", className)} {...props} />;
 }
 
 export function CardContent({
 	className,
 	...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-	return <div className={cn("px-5 py-4", className)} {...props} />;
+	return <div className={cn("min-w-0 px-5 py-4", className)} {...props} />;
 }
 
 const badgeVariants = {
@@ -220,7 +220,7 @@ export function PageHeader({
 					<p className="mt-1 text-gray-500 text-sm dark:text-gray-400">{description}</p>
 				) : null}
 			</div>
-			{actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+			{actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
 		</div>
 	);
 }
@@ -239,7 +239,7 @@ export function StatCard({
 			<CardContent>
 				<div className="text-gray-500 text-sm dark:text-gray-400">{label}</div>
 				<div className="mt-1 font-bold text-2xl text-gray-900 dark:text-white">{value}</div>
-				{hint ? <div className="mt-1 text-gray-500 text-xs">{hint}</div> : null}
+				{hint ? <div className="mt-1 text-gray-500 text-xs dark:text-gray-400">{hint}</div> : null}
 			</CardContent>
 		</Card>
 	);
@@ -332,14 +332,15 @@ export function Modal({
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+						aria-label="Close dialog"
+						className="rounded-md p-1 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
 					>
 						<X className="h-5 w-5" />
 					</button>
 				</div>
 				<div className="px-5 py-4">{children}</div>
 				{footer ? (
-					<div className="flex justify-end gap-2 border-gray-200 border-t px-5 py-3 dark:border-gray-800">
+					<div className="flex flex-wrap justify-end gap-2 border-gray-200 border-t px-5 py-3 dark:border-gray-800">
 						{footer}
 					</div>
 				) : null}

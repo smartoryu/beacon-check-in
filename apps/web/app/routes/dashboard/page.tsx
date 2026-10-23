@@ -109,7 +109,7 @@ export default function DashboardPage() {
 							</p>
 						) : (
 							<div className="overflow-x-auto">
-								<table className="w-full text-left text-sm">
+								<table className="w-full min-w-[720px] text-left text-sm">
 									<thead className="text-gray-500 text-xs uppercase dark:text-gray-400">
 										<tr>
 											<th className="pb-2">User</th>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
 						<h2 className="font-semibold text-gray-900 dark:text-white">
 							Users ({users.length})
 						</h2>
-						<span className="text-gray-500 text-xs">
+						<span className="text-gray-500 text-xs dark:text-gray-400">
 							Super admin and admin accounts can manage events and beacons.
 						</span>
 					</div>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
 						<p className="text-gray-500 text-sm dark:text-gray-400">No users yet.</p>
 					) : (
 						<div className="max-h-80 overflow-auto">
-							<table className="w-full text-left text-sm">
+							<table className="w-full min-w-[720px] text-left text-sm">
 								<thead className="sticky top-0 bg-white text-gray-500 text-xs uppercase dark:bg-gray-900 dark:text-gray-400">
 									<tr>
 										<th className="pb-2">Name</th>

@@ -262,7 +262,7 @@ function EventDetailBody({
 						/>
 					) : (
 						<div className="overflow-x-auto">
-							<table className="w-full text-left text-sm">
+							<table className="w-full min-w-[900px] text-left text-sm">
 								<thead className="text-gray-500 text-xs uppercase dark:text-gray-400">
 									<tr>
 										<th className="pb-2">User</th>
@@ -282,7 +282,7 @@ function EventDetailBody({
 												<div className="font-medium text-gray-900 dark:text-gray-100">
 													{item.user_name || "Unknown"}
 												</div>
-												<div className="text-gray-500 text-xs">{item.user_email}</div>
+												<div className="text-gray-500 text-xs dark:text-gray-400">{item.user_email}</div>
 											</td>
 											<td className="py-2">
 												<Badge variant={item.status === "accepted" ? "green" : "red"}>

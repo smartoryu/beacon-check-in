@@ -139,7 +139,7 @@ export default function AdminsPage() {
 						<EmptyState title="No admins yet" description="Create the first admin account." />
 					) : (
 						<div className="overflow-x-auto">
-							<table className="w-full text-left text-sm">
+							<table className="w-full min-w-[720px] text-left text-sm">
 								<thead className="text-gray-500 text-xs uppercase dark:text-gray-400">
 									<tr>
 										<th className="pb-2">Name</th>
@@ -174,7 +174,7 @@ export default function AdminsPage() {
 													{formatDateTime(admin.last_login_at)}
 												</td>
 												<td className="py-2">
-													<div className="flex justify-end gap-1">
+													<div className="flex flex-wrap justify-end gap-1">
 														<Button
 															variant="ghost"
 															size="sm"
