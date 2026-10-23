@@ -62,6 +62,12 @@ variable "domain" {
   default     = "beacon-check-in-api.playground.my.id"
 }
 
+variable "web_domain" {
+  description = "Public web app hostname."
+  type        = string
+  default     = "admin-beacon-check-in.playground.my.id"
+}
+
 variable "cloudflare_zone_name" {
   description = "Cloudflare zone name. Informational only; records key off cloudflare_zone_id."
   type        = string

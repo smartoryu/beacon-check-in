@@ -22,3 +22,24 @@
 		format console
 	}
 }
+
+{$WEB_DOMAIN} {
+	tls {
+		dns cloudflare {$CLOUDFLARE_API_TOKEN}
+	}
+
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+	}
+
+	reverse_proxy web:80
+
+	log {
+		output stdout
+		format console
+	}
+}

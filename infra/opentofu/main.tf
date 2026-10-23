@@ -79,3 +79,13 @@ resource "cloudflare_record" "api" {
   ttl     = var.cloudflare_proxied ? 1 : 300
   comment = "Beacon Check-In API"
 }
+
+resource "cloudflare_record" "web" {
+  zone_id = var.cloudflare_zone_id
+  name    = var.web_domain
+  type    = "A"
+  content = google_compute_address.api.address
+  proxied = var.cloudflare_proxied
+  ttl     = var.cloudflare_proxied ? 1 : 300
+  comment = "Beacon Check-In admin web"
+}

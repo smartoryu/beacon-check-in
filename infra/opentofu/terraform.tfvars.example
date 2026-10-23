@@ -19,6 +19,7 @@ admin_cidr     = "203.0.113.10/32"
 
 # Cloudflare DNS
 domain               = "beacon-check-in-api.playground.my.id"
+web_domain           = "admin-beacon-check-in.playground.my.id"
 cloudflare_zone_name = "playground.my.id"
 cloudflare_proxied   = true
 

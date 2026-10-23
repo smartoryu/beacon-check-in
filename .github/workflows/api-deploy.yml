@@ -1,8 +1,8 @@
-name: API Deploy
+name: App Deploy
 
 on:
   workflow_run:
-    workflows: ["API Release"]
+    workflows: ["App Release"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -23,6 +23,7 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   API_DOMAIN: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
+  WEB_DOMAIN: ${{ vars.WEB_DOMAIN || 'admin-beacon-check-in.playground.my.id' }}
 
 jobs:
   preflight:
@@ -47,7 +48,7 @@ jobs:
           fi
 
   deploy:
-    name: Deploy API to GCP
+    name: Deploy app to GCP
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: production
@@ -98,6 +99,7 @@ jobs:
           API_ENV_FILE: ${{ secrets.API_ENV_FILE }}
           GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-api:${{ env.IMAGE_TAG }}
           GHCR_CADDY_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-caddy:${{ env.IMAGE_TAG }}
+          GHCR_WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-web:${{ env.IMAGE_TAG }}
         run: |
           set -euo pipefail
           umask 077
@@ -105,11 +107,13 @@ jobs:
           {
             echo "GHCR_IMAGE=$GHCR_IMAGE"
             echo "GHCR_CADDY_IMAGE=$GHCR_CADDY_IMAGE"
+            echo "GHCR_WEB_IMAGE=$GHCR_WEB_IMAGE"
           } >> /tmp/beacon-check-in.env
           # Catch an accidentally empty/malformed secret before touching the VM.
           grep -q '^DATABASE_URL=' /tmp/beacon-check-in.env
           grep -q '^JWT_SECRET_KEY=' /tmp/beacon-check-in.env
           grep -q '^GHCR_IMAGE=' /tmp/beacon-check-in.env
+          grep -q '^GHCR_WEB_IMAGE=' /tmp/beacon-check-in.env
 
       - name: Copy deployment files and env
         env:
@@ -154,16 +158,18 @@ jobs:
       - name: Verify HTTPS health
         env:
           API_DOMAIN: ${{ env.API_DOMAIN }}
+          WEB_DOMAIN: ${{ env.WEB_DOMAIN }}
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 30); do
-            code="$(curl -sS -o /dev/null -w '%{http_code}' "https://$API_DOMAIN/healthz" || true)"
-            if [ "$code" = "200" ]; then
-              echo "API health check passed on attempt $attempt"
+          for attempt in $(seq 1 40); do
+            api_code="$(curl -sS -o /dev/null -w '%{http_code}' "https://$API_DOMAIN/healthz" || true)"
+            web_code="$(curl -sS -o /dev/null -w '%{http_code}' "https://$WEB_DOMAIN/healthz" || true)"
+            if [ "$api_code" = "200" ] && [ "$web_code" = "200" ]; then
+              echo "API and web health checks passed on attempt $attempt"
               exit 0
             fi
-            echo "Attempt $attempt: HTTP $code"
+            echo "Attempt $attempt: API HTTP $api_code, web HTTP $web_code"
             sleep 5
           done
-          echo "API did not become healthy in time"
+          echo "API or web did not become healthy in time"
           exit 1

@@ -1,12 +1,15 @@
-name: API Release
+name: App Release
 
 on:
   push:
     branches: [main]
     paths:
       - "apps/api/**"
-      - "infra/deploy/caddy/**"
+      - "apps/web/**"
+      - "packages/shared-ui/**"
+      - "infra/deploy/**"
       - ".github/workflows/api-release.yml"
+      - ".github/workflows/api-deploy.yml"
   workflow_dispatch:
 
 permissions:
@@ -23,7 +26,7 @@ env:
 
 jobs:
   publish:
-    name: Publish API and Caddy images
+    name: Publish API, Caddy and web images
     runs-on: ubuntu-24.04
     timeout-minutes: 30
 
@@ -78,5 +81,27 @@ jobs:
           push: true
           tags: ${{ steps.caddy-meta.outputs.tags }}
           labels: ${{ steps.caddy-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Web image metadata
+        id: web-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/beacon-check-in-web
+          tags: |
+            type=sha,format=short,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: ${{ steps.web-meta.outputs.tags }}
+          labels: ${{ steps.web-meta.outputs.labels }}
+          build-args: |
+            VITE_API_BASE_URL=https://${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}/api/v1
           cache-from: type=gha
           cache-to: type=gha,mode=max

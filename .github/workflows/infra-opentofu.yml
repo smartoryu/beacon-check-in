@@ -128,6 +128,7 @@ jobs:
           TF_VAR_ssh_public_key: ${{ secrets.DEPLOY_SSH_PUBLIC_KEY }}
           TF_VAR_admin_cidr: ${{ vars.ADMIN_CIDR }}
           TF_VAR_domain: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
+          TF_VAR_web_domain: ${{ vars.WEB_DOMAIN || 'admin-beacon-check-in.playground.my.id' }}
           TF_VAR_cloudflare_zone_name: ${{ vars.CLOUDFLARE_ZONE_NAME || 'playground.my.id' }}
           TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -197,6 +198,7 @@ jobs:
           TF_VAR_ssh_public_key: ${{ secrets.DEPLOY_SSH_PUBLIC_KEY }}
           TF_VAR_admin_cidr: ${{ vars.ADMIN_CIDR }}
           TF_VAR_domain: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
+          TF_VAR_web_domain: ${{ vars.WEB_DOMAIN || 'admin-beacon-check-in.playground.my.id' }}
           TF_VAR_cloudflare_zone_name: ${{ vars.CLOUDFLARE_ZONE_NAME || 'playground.my.id' }}
           TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -216,6 +218,7 @@ jobs:
           TF_VAR_ssh_public_key: ${{ secrets.DEPLOY_SSH_PUBLIC_KEY }}
           TF_VAR_admin_cidr: ${{ vars.ADMIN_CIDR }}
           TF_VAR_domain: ${{ vars.API_DOMAIN || 'beacon-check-in-api.playground.my.id' }}
+          TF_VAR_web_domain: ${{ vars.WEB_DOMAIN || 'admin-beacon-check-in.playground.my.id' }}
           TF_VAR_cloudflare_zone_name: ${{ vars.CLOUDFLARE_ZONE_NAME || 'playground.my.id' }}
           TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}

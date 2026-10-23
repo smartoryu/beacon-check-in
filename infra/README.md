@@ -11,10 +11,11 @@ This directory contains the API-only production deployment:
 
 | Item | Value |
 | :-- | :-- |
-| Public hostname | `beacon-check-in-api.playground.my.id` |
+| API hostname | `beacon-check-in-api.playground.my.id` |
+| Web hostname | `admin-beacon-check-in.playground.my.id` |
 | Compute | GCP `e2-micro`, `us-central1-a`, Ubuntu 24.04, 30 GB pd-standard |
 | Database | Supabase PostgreSQL (session pooler, TLS) |
-| Registry | `ghcr.io/smartoryu/beacon-check-in-api` and `.../beacon-check-in-caddy` |
+| Registry | `ghcr.io/smartoryu/beacon-check-in-api`, `.../beacon-check-in-caddy`, `.../beacon-check-in-web` |
 | TLS | Cloudflare proxied DNS + Caddy Cloudflare DNS-01 challenge |
 | Reverse proxy | Caddy → `api:8080` |
 | CI/CD | GitHub Actions (public repo) |
@@ -145,6 +146,7 @@ Repository → Settings → Secrets and variables → Actions.
 | `DEPLOY_USER` | `deploy` |
 | `ADMIN_CIDR` | `203.0.113.10/32` |
 | `API_DOMAIN` | `beacon-check-in-api.playground.my.id` |
+| `WEB_DOMAIN` | `admin-beacon-check-in.playground.my.id` |
 | `CLOUDFLARE_ZONE_NAME` | `playground.my.id` (informational; records key off the ID) |
 | `CLOUDFLARE_ZONE_ID` | `aacb6e1de8db2fb5963a35d6865265f8` |
 
@@ -172,6 +174,8 @@ This secret is the complete runtime `.env` for the VM. Start from
 
 ```dotenv
 DOMAIN=beacon-check-in-api.playground.my.id
+WEB_DOMAIN=admin-beacon-check-in.playground.my.id
+CORS_ORIGINS=[https://admin-beacon-check-in.playground.my.id]
 ACME_EMAIL=you@example.com
 CLOUDFLARE_API_TOKEN=...
 APP_MODE=production
@@ -190,15 +194,16 @@ tags automatically. Do not put those two lines in the secret.
 
 1. Push to `main` (or run **API Release** manually).
 2. The release workflow builds and pushes both images to GHCR.
-3. **API Deploy** runs after a successful release and:
+3. **App Release** builds and pushes the API, Caddy and web images.
+4. **App Deploy** runs after a successful release and:
    - writes `/opt/beacon-check-in/.env` with mode `600`,
    - copies `docker-compose.yml` and `Caddyfile`,
    - logs in to GHCR with the workflow token,
    - pulls the new images,
    - runs `migrate:up`,
    - runs `bootstrap:admin` (idempotent),
-   - restarts the API and Caddy, and
-   - checks `https://<domain>/healthz`.
+   - restarts the API, web and Caddy, and
+   - checks both `https://<api-domain>/healthz` and `https://<web-domain>/healthz`.
 
 First deployment only:
 
@@ -219,6 +224,7 @@ dig +short beacon-check-in-api.playground.my.id
 
 # Health over HTTPS
 curl -fsS https://beacon-check-in-api.playground.my.id/healthz
+curl -fsS https://admin-beacon-check-in.playground.my.id/healthz
 
 # API docs (only if ENABLE_API_DOCS=true)
 curl -I https://beacon-check-in-api.playground.my.id/api-docs
