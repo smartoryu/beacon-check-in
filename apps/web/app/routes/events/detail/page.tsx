@@ -169,7 +169,7 @@ function EventDetailBody({
 			<div className="grid gap-6 lg:grid-cols-2">
 				<Card>
 					<CardHeader>
-						<div className="flex items-center justify-between">
+						<div className="flex flex-wrap items-start justify-between gap-3">
 							<div>
 								<h2 className="font-semibold text-gray-900 dark:text-white">
 									Beacon placement

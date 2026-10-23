@@ -171,7 +171,7 @@ export default function DashboardPage() {
 
 			<Card>
 				<CardHeader>
-					<div className="flex items-center justify-between">
+					<div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
 						<h2 className="font-semibold text-gray-900 dark:text-white">
 							Users ({users.length})
 						</h2>

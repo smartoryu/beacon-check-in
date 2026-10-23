@@ -195,7 +195,7 @@ export default function BeaconsPage() {
 
 			<Card>
 				<CardHeader>
-					<div className="flex items-center justify-between">
+					<div className="flex flex-wrap items-center justify-between gap-2">
 						<h2 className="font-semibold text-gray-900 dark:text-white">
 							Registered beacons ({filtered.length})
 						</h2>

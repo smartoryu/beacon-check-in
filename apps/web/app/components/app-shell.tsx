@@ -144,14 +144,17 @@ export function AppShell({
 						</Button>
 					</div>
 				</header>
-				<nav className="flex gap-1 overflow-x-auto border-gray-200 border-b bg-white px-2 py-2 lg:hidden dark:border-gray-800 dark:bg-gray-900">
+				<nav
+					aria-label="Main navigation"
+					className="grid grid-cols-3 gap-1 border-gray-200 border-b bg-white px-2 py-2 lg:hidden dark:border-gray-800 dark:bg-gray-900"
+				>
 					{[...navItems, ...(isSuper ? superAdminItems : [])].map((item) => (
 						<NavLink
 							key={item.to}
 							to={item.to}
 							className={({ isActive }) =>
 								cn(
-									"flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-xs",
+									"flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 font-medium text-[11px]",
 									isActive
 										? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
 										: "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",

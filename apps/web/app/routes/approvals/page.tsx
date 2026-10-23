@@ -83,7 +83,7 @@ export default function ApprovalsPage() {
 
 			<Card>
 				<CardHeader>
-					<div className="flex items-center justify-between">
+					<div className="flex flex-wrap items-center justify-between gap-2">
 						<h2 className="font-semibold text-gray-900 dark:text-white">Pending requests</h2>
 						<Badge variant={pending.length ? "amber" : "gray"}>{pending.length} pending</Badge>
 					</div>
