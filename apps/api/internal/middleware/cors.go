@@ -22,6 +22,12 @@ func CORSMiddleware(cfg *config.Config) echo.MiddlewareFunc {
 			echo.HeaderOrigin,
 			echo.HeaderContentType,
 			echo.HeaderAccept,
+			echo.HeaderAuthorization,
+			echo.HeaderXRequestedWith,
+			echo.HeaderXRequestID,
+			echo.HeaderXCSRFToken,
+			"X-App-Audience",
+			"X-Signature",
 		},
 		ExposeHeaders: []string{
 			echo.HeaderAccept,
