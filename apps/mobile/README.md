@@ -98,7 +98,7 @@ App Distribution Admin role:
 FIREBASE_SERVICE_ACCOUNT_FILE=/absolute/path/to/service-account.json
 ```
 
-or use the legacy `FIREBASE_TOKEN`.
+or use the legacy `FIREBASE_TOKEN` (both are read from `.env`).
 
 Examples:
 
