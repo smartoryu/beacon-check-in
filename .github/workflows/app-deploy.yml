@@ -2,11 +2,17 @@ name: App Deploy
 
 on:
   workflow_run:
-    workflows: ["App Release"]
+    workflows: ["API Release", "Web Release"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
     inputs:
+      service:
+        description: "Service to deploy"
+        required: true
+        default: api
+        type: choice
+        options: [api, web]
       image_tag:
         description: "Image tag to deploy (e.g. sha-abc1234). Defaults to the current commit."
         required: false
@@ -63,16 +69,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve image tag
+      - name: Resolve deployment target
         env:
+          INPUT_SERVICE: ${{ inputs.service }}
           INPUT_TAG: ${{ inputs.image_tag }}
+          RELEASE_NAME: ${{ github.event.workflow_run.name }}
           TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
+          if [ -n "$INPUT_SERVICE" ]; then
+            service="$INPUT_SERVICE"
+          elif [ "$RELEASE_NAME" = "API Release" ]; then
+            service="api"
+          else
+            service="web"
+          fi
           if [ -n "$INPUT_TAG" ]; then
             tag="$INPUT_TAG"
           else
             tag="sha-${TARGET_SHA::7}"
           fi
+          echo "SERVICE=$service" >> "$GITHUB_ENV"
           echo "IMAGE_TAG=$tag" >> "$GITHUB_ENV"
           echo "DEPLOY_SHA=$TARGET_SHA" >> "$GITHUB_ENV"
 
@@ -97,17 +113,23 @@ jobs:
       - name: Write runtime env file
         env:
           API_ENV_FILE: ${{ secrets.API_ENV_FILE }}
-          GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-api:${{ env.IMAGE_TAG }}
-          GHCR_CADDY_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-caddy:${{ env.IMAGE_TAG }}
-          GHCR_WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/beacon-check-in-web:${{ env.IMAGE_TAG }}
         run: |
           set -euo pipefail
           umask 077
+          api_tag="latest"
+          web_tag="latest"
+          caddy_tag="latest"
+          if [ "$SERVICE" = "api" ]; then
+            api_tag="$IMAGE_TAG"
+            caddy_tag="$IMAGE_TAG"
+          elif [ "$SERVICE" = "web" ]; then
+            web_tag="$IMAGE_TAG"
+          fi
           printf '%s\n' "$API_ENV_FILE" > /tmp/beacon-check-in.env
           {
-            echo "GHCR_IMAGE=$GHCR_IMAGE"
-            echo "GHCR_CADDY_IMAGE=$GHCR_CADDY_IMAGE"
-            echo "GHCR_WEB_IMAGE=$GHCR_WEB_IMAGE"
+            echo "GHCR_IMAGE=ghcr.io/${{ github.repository_owner }}/beacon-check-in-api:$api_tag"
+            echo "GHCR_CADDY_IMAGE=ghcr.io/${{ github.repository_owner }}/beacon-check-in-caddy:$caddy_tag"
+            echo "GHCR_WEB_IMAGE=ghcr.io/${{ github.repository_owner }}/beacon-check-in-web:$web_tag"
           } >> /tmp/beacon-check-in.env
           # Catch an accidentally empty/malformed secret before touching the VM.
           grep -q '^DATABASE_URL=' /tmp/beacon-check-in.env
@@ -135,7 +157,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key -p "$port" "$VM_USER@$VM_HOST" \
             "chmod 600 /opt/beacon-check-in/.env"
 
-      - name: Pull, migrate, bootstrap and restart
+      - name: Pull and restart the selected service
         env:
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USER: ${{ secrets.VM_USER }}
@@ -145,14 +167,21 @@ jobs:
         run: |
           set -euo pipefail
           port="${VM_PORT:-22}"
+          if [ "$SERVICE" = "api" ]; then
+            services="api caddy"
+          else
+            services="web caddy"
+          fi
           # The token is sent over stdin, not embedded in the remote command.
           printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key -p "$port" "$VM_USER@$VM_HOST" \
             "docker login ghcr.io -u '$GHCR_USER' --password-stdin && \
              cd /opt/beacon-check-in && \
-             docker compose pull && \
-             docker compose run --rm api migrate:up && \
-             docker compose run --rm api bootstrap:admin && \
-             docker compose up -d --remove-orphans && \
+             docker compose pull $services && \
+             if [ '$SERVICE' = 'api' ]; then \
+               docker compose run --rm api migrate:up && \
+               docker compose run --rm api bootstrap:admin; \
+             fi && \
+             docker compose up -d $services && \
              docker image prune -f"
 
       - name: Verify HTTPS health

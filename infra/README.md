@@ -192,10 +192,10 @@ tags automatically. Do not put those two lines in the secret.
 
 ## Deploying
 
-1. Push to `main` (or run **API Release** manually).
-2. The release workflow builds and pushes both images to GHCR.
-3. **App Release** builds and pushes the API, Caddy and web images.
-4. **App Deploy** runs after a successful release and:
+1. Push to `main`.
+2. **API Release** runs only for `apps/api/**` (plus Caddy/config changes) and publishes the API + Caddy images.
+3. **Web Release** runs only for `apps/web/**`, `packages/shared-ui/**` and `infra/deploy/web/**`, and publishes the web image.
+4. **App Deploy** runs after either release and deploys only the affected service + Caddy:
    - writes `/opt/beacon-check-in/.env` with mode `600`,
    - copies `docker-compose.yml` and `Caddyfile`,
    - logs in to GHCR with the workflow token,
@@ -209,7 +209,9 @@ First deployment only:
 
 ```bash
 gh workflow run "API Release"
-gh workflow run "API Deploy"
+gh workflow run "App Deploy" -f service=api
+gh workflow run "Web Release"
+gh workflow run "App Deploy" -f service=web
 ```
 
 After OpenTofu creates the VM, set the `VM_HOST` secret to the `static_ip`
@@ -246,7 +248,9 @@ The release workflow publishes immutable `sha-<short>` tags. Re-run **API
 Deploy** with an older tag:
 
 ```bash
-gh workflow run "API Deploy" -f image_tag=sha-<old-sha>
+gh workflow run "App Deploy" -f service=api -f image_tag=sha-<old-sha>
+# or for the web app:
+gh workflow run "App Deploy" -f service=web -f image_tag=sha-<old-sha>
 ```
 
 Migrations are forward-only. If a release contains a destructive migration,

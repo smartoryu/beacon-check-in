@@ -24,7 +24,7 @@
     "e2e-ui": "playwright test --ui",
     "e2e": "playwright test",
     "typegen": "react-router typegen",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "react-router typegen && tsc --noEmit"
   },
   "dependencies": {
     "@react-router/node": "^7.9.3",
