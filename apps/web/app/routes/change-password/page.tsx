@@ -1,15 +1,10 @@
-import { Form, redirect, useActionData, useNavigation } from "react-router";
+import { Form, Navigate, redirect, useActionData, useNavigation } from "react-router";
 import { Button, ErrorAlert, Input } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
 import { clearAuth, getAccessToken } from "#/lib/auth";
 
 export function meta() {
 	return [{ title: "Change password | Beacon Check-In" }];
-}
-
-export function clientLoader() {
-	if (!getAccessToken()) throw redirect("/login");
-	return null;
 }
 
 export async function clientAction({ request }: { request: Request }) {
@@ -38,6 +33,10 @@ export default function ChangePasswordPage() {
 	const actionData = useActionData<typeof clientAction>();
 	const navigation = useNavigation();
 	const pending = navigation.state === "submitting";
+
+	if (!getAccessToken()) {
+		return <Navigate to="/login" replace />;
+	}
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">

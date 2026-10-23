@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { BeaconPlacementGrid } from "#/components/beacon-placement-grid";
 import { TriangulationGraph } from "#/components/triangulation-graph";
 import {
@@ -12,27 +12,62 @@ import {
 	EmptyState,
 	ErrorAlert,
 	Modal,
+	DetailSkeleton,
 	PageHeader,
 	Spinner,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
 import { eventStatus, formatDateTime } from "#/lib/datetime";
+import type { Checkin, Event } from "#/lib/types";
+import { useAsync } from "#/lib/use-async";
 
 export function meta() {
 	return [{ title: "Event detail | Beacon Check-In" }];
 }
 
-export async function clientLoader({ params }: { params: { id?: string } }) {
-	if (!params.id) throw new Response("Missing event id", { status: 400 });
-	const event = await api.getEvent(params.id);
-	const checkins = await api.listEventCheckins(params.id, "all");
-	return { event, checkins };
+export default function EventDetailPage() {
+	const { id } = useParams();
+	const { data, loading, error, refresh } = useAsync(async () => {
+		if (!id) throw new Error("Missing event id");
+		const [event, checkins] = await Promise.all([
+			api.getEvent(id),
+			api.listEventCheckins(id, "all"),
+		]);
+		return { event, checkins };
+	}, [id]);
+
+	if (loading) return <DetailSkeleton />;
+
+	if (error || !data) {
+		return (
+			<div className="space-y-6">
+				<PageHeader title="Event detail" />
+				<ErrorAlert message="Unable to load the event." details={error?.message} />
+				<Button onClick={refresh}>Retry</Button>
+			</div>
+		);
+	}
+
+	return (
+		<EventDetailBody
+			key={data.event.id}
+			event={data.event}
+			checkins={data.checkins}
+			refresh={refresh}
+		/>
+	);
 }
 
-export default function EventDetailPage() {
-	const { event, checkins } = useLoaderData<typeof clientLoader>();
+function EventDetailBody({
+	event,
+	checkins,
+	refresh,
+}: {
+	event: Event;
+	checkins: Checkin[];
+	refresh: () => void;
+}) {
 	const navigate = useNavigate();
-	const revalidator = useRevalidator();
 	const [placements, setPlacements] = useState(event.beacons);
 	const [savingLayout, setSavingLayout] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -71,7 +106,7 @@ export default function EventDetailPage() {
 					tx_power_override: beacon.tx_power_override ?? null,
 				})),
 			);
-			revalidator.revalidate();
+			refresh();
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Unable to save layout");
 		} finally {

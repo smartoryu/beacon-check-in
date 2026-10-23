@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, redirect, useLoaderData, useRevalidator } from "react-router";
+import { Navigate } from "react-router";
 import {
 	Badge,
 	Button,
@@ -10,34 +10,46 @@ import {
 	ErrorAlert,
 	Modal,
 	PageHeader,
+	PageSkeleton,
 	Textarea,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
+import { useAuthUser } from "#/lib/auth-context";
 import { formatDateTime } from "#/lib/datetime";
+import { useAsync } from "#/lib/use-async";
 import type { ChangeRequest } from "#/lib/types";
 
 export function meta() {
 	return [{ title: "Approvals | Beacon Check-In" }];
 }
 
-export async function clientLoader() {
-	const me = await api.me();
-	if (me.role !== "super_admin") throw redirect("/dashboard");
-	const requests = await api.listChangeRequests("");
-	return { me, requests };
-}
-
 type ReviewState = { request: ChangeRequest; action: "approve" | "reject" } | null;
 
 export default function ApprovalsPage() {
-	const { me, requests } = useLoaderData<typeof clientLoader>();
-	const revalidator = useRevalidator();
+	const me = useAuthUser();
+	const { data, loading, error: loadError, refresh } = useAsync(
+		() => api.listChangeRequests(""),
+		[],
+	);
+	const requests = data ?? [];
 	const [review, setReview] = useState<ReviewState>(null);
 	const [note, setNote] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	if (me.role !== "super_admin") return <Navigate to="/dashboard" replace />;
+
+	if (loading) return <PageSkeleton cards={0} rows={6} />;
+
+	if (loadError) {
+		return (
+			<div className="space-y-6">
+				<PageHeader title="Approvals" description="Review beacon requests." />
+				<ErrorAlert message="Unable to load approvals." details={loadError.message} />
+				<Button onClick={refresh}>Retry</Button>
+			</div>
+		);
+	}
 
 	const pending = requests.filter((request) => request.status === "pending");
 	const history = requests.filter((request) => request.status !== "pending");
@@ -54,7 +66,7 @@ export default function ApprovalsPage() {
 			}
 			setReview(null);
 			setNote("");
-			revalidator.revalidate();
+			refresh();
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Request failed");
 		} finally {

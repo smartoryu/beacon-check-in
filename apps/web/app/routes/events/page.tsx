@@ -1,30 +1,34 @@
 import { useMemo, useState } from "react";
-import { Link, useLoaderData } from "react-router";
+import { Link } from "react-router";
 import {
 	Badge,
+	Button,
 	ButtonLink,
 	Card,
 	CardContent,
 	EmptyState,
+	ErrorAlert,
 	Input,
 	PageHeader,
+	Skeleton,
 	Select,
 } from "#/components/ui";
 import { api } from "#/lib/api";
 import { eventStatus, formatDateTime } from "#/lib/datetime";
+import { useAsync } from "#/lib/use-async";
 
 export function meta() {
 	return [{ title: "Events | Beacon Check-In" }];
 }
 
-export async function clientLoader() {
-	return api.listEvents({ include_deleted: false });
-}
-
 export default function EventsPage() {
-	const events = useLoaderData<typeof clientLoader>();
+	const { data, loading, error, refresh } = useAsync(
+		() => api.listEvents({ include_deleted: false }),
+		[],
+	);
 	const [search, setSearch] = useState("");
 	const [status, setStatus] = useState("all");
+	const events = useMemo(() => data ?? [], [data]);
 
 	const filtered = useMemo(() => {
 		return events.filter((event) => {
@@ -36,13 +40,51 @@ export default function EventsPage() {
 		});
 	}, [events, search, status]);
 
+	if (loading) {
+		return (
+			<div className="space-y-6">
+				<PageHeader
+					title="Events"
+					description="Create events, attach at least one beacon and place beacons on the floor grid."
+				/>
+				<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+					{Array.from({ length: 6 }).map((_, index) => (
+						<Card key={index}>
+							<CardContent className="space-y-4">
+								<Skeleton className="h-5 w-40" />
+								<Skeleton className="h-4 w-56" />
+								<Skeleton className="h-4 w-48" />
+								<Skeleton className="h-4 w-32" />
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="space-y-6">
+				<PageHeader title="Events" description="Create and manage events." />
+				<ErrorAlert message="Unable to load events." details={error.message} />
+				<Button onClick={refresh}>Retry</Button>
+			</div>
+		);
+	}
+
 	return (
 		<div className="space-y-6">
 			<PageHeader
 				title="Events"
 				description="Create events, attach at least one beacon and place beacons on the floor grid."
 				actions={
-					<ButtonLink to="/events/new">Create event</ButtonLink>
+					<>
+						<Button variant="secondary" onClick={refresh}>
+							Refresh
+						</Button>
+						<ButtonLink to="/events/new">Create event</ButtonLink>
+					</>
 				}
 			/>
 

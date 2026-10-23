@@ -10,7 +10,7 @@ import {
 import { Link, NavLink, useNavigate } from "react-router";
 import { clearAuth } from "#/lib/auth";
 import type { User } from "#/lib/types";
-import { Badge, Button, cn } from "./ui";
+import { Badge, Button, Skeleton, cn } from "./ui";
 
 const navItems = [
 	{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -157,6 +157,57 @@ export function AppShell({
 					))}
 				</nav>
 				<main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+			</div>
+		</div>
+	);
+}
+
+export function AppShellSkeleton() {
+	return (
+		<div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+			<aside className="fixed inset-y-0 left-0 hidden w-64 border-gray-200 border-r bg-white p-5 lg:block dark:border-gray-800 dark:bg-gray-900">
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-9 w-9 rounded-lg" />
+					<div className="space-y-2">
+						<Skeleton className="h-3 w-28" />
+						<Skeleton className="h-3 w-20" />
+					</div>
+				</div>
+				<div className="mt-8 space-y-3">
+					{Array.from({ length: 6 }).map((_, index) => (
+						<Skeleton key={index} className="h-9 w-full" />
+					))}
+				</div>
+			</aside>
+			<div className="lg:pl-64">
+				<div className="border-gray-200 border-b bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+					<Skeleton className="h-6 w-40" />
+				</div>
+				<main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+					<div className="space-y-2">
+						<Skeleton className="h-8 w-56" />
+						<Skeleton className="h-4 w-80" />
+					</div>
+					<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+						{Array.from({ length: 4 }).map((_, index) => (
+							<div
+								key={index}
+								className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+							>
+								<Skeleton className="h-4 w-24" />
+								<Skeleton className="mt-3 h-8 w-16" />
+							</div>
+						))}
+					</div>
+					<div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+						<Skeleton className="h-4 w-40" />
+						<div className="mt-5 space-y-4">
+							{Array.from({ length: 5 }).map((_, index) => (
+								<Skeleton key={index} className="h-5 w-full" />
+							))}
+						</div>
+					</div>
+				</main>
 			</div>
 		</div>
 	);

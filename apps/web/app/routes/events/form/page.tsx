@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { useLoaderData, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import {
 	Button,
 	Card,
@@ -8,6 +8,7 @@ import {
 	CardHeader,
 	ErrorAlert,
 	Field,
+	FormSkeleton,
 	Input,
 	PageHeader,
 	Select,
@@ -19,16 +20,10 @@ import {
 	zonedInputToIso,
 } from "#/lib/datetime";
 import type { Beacon, Event, EventInput } from "#/lib/types";
+import { useAsync } from "#/lib/use-async";
 
 export function meta() {
 	return [{ title: "Event form | Beacon Check-In" }];
-}
-
-export async function clientLoader({ params }: { params: { id?: string } }) {
-	const beacons = await api.listBeacons({ status: "active" });
-	if (!params.id) return { event: null as Event | null, beacons };
-	const event = await api.getEvent(params.id);
-	return { event, beacons };
 }
 
 type Placement = { x: number; y: number; tx_power_override?: number | null };
@@ -54,10 +49,46 @@ function defaultPlacement(index: number, width: number, height: number): Placeme
 }
 
 export default function EventFormPage() {
-	const { event, beacons } = useLoaderData<typeof clientLoader>();
-	const params = useParams();
+	const { id } = useParams();
+	const isEdit = Boolean(id);
+	const { data, loading, error, refresh } = useAsync(async () => {
+		const beacons = await api.listBeacons({ status: "active" });
+		const event = id ? await api.getEvent(id) : null;
+		return { event, beacons };
+	}, [id]);
+
+	if (loading) return <FormSkeleton />;
+
+	if (error || !data) {
+		return (
+			<div className="space-y-6">
+				<PageHeader title={isEdit ? "Edit event" : "Create event"} />
+				<ErrorAlert message="Unable to load the event form." details={error?.message} />
+				<Button onClick={refresh}>Retry</Button>
+			</div>
+		);
+	}
+
+	return (
+		<EventForm
+			key={data.event?.id ?? "new"}
+			event={data.event}
+			beacons={data.beacons}
+			isEdit={isEdit}
+		/>
+	);
+}
+
+function EventForm({
+	event,
+	beacons,
+	isEdit,
+}: {
+	event: Event | null;
+	beacons: Beacon[];
+	isEdit: boolean;
+}) {
 	const navigate = useNavigate();
-	const isEdit = Boolean(params.id);
 
 	const [title, setTitle] = useState(event?.title ?? "");
 	const [description, setDescription] = useState(event?.description ?? "");

@@ -347,3 +347,124 @@ export function Modal({
 		</div>
 	);
 }
+
+export function Skeleton({ className }: { className?: string }) {
+	return (
+		<div
+			className={cn(
+				"animate-pulse rounded-md bg-gray-200/80 dark:bg-gray-800",
+				className,
+			)}
+		/>
+	);
+}
+
+export function TableSkeleton({ rows = 5 }: { rows?: number }) {
+	return (
+		<div className="space-y-3">
+			<Skeleton className="h-4 w-40" />
+			{Array.from({ length: rows }).map((_, index) => (
+				<div
+					key={index}
+					className="grid grid-cols-[1.5fr_1fr_0.7fr_0.8fr] gap-4"
+				>
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-4 w-20" />
+					<Skeleton className="h-4 w-24" />
+				</div>
+			))}
+		</div>
+	);
+}
+
+export function PageSkeleton({
+	cards = 4,
+	rows = 5,
+}: {
+	cards?: number;
+	rows?: number;
+}) {
+	return (
+		<div className="space-y-6">
+			<div className="space-y-2">
+				<Skeleton className="h-8 w-56" />
+				<Skeleton className="h-4 w-80" />
+			</div>
+			{cards > 0 ? (
+				<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+					{Array.from({ length: cards }).map((_, index) => (
+						<Card key={index}>
+							<CardContent>
+								<Skeleton className="h-4 w-24" />
+								<Skeleton className="mt-3 h-8 w-16" />
+								<Skeleton className="mt-2 h-3 w-32" />
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			) : null}
+			<Card>
+				<CardContent>
+					<TableSkeleton rows={rows} />
+				</CardContent>
+			</Card>
+		</div>
+	);
+}
+
+export function FormSkeleton() {
+	return (
+		<div className="space-y-6">
+			<div className="space-y-2">
+				<Skeleton className="h-8 w-56" />
+				<Skeleton className="h-4 w-80" />
+			</div>
+			<Card>
+				<CardContent className="grid gap-4 md:grid-cols-2">
+					{Array.from({ length: 6 }).map((_, index) => (
+						<div key={index} className="space-y-2">
+							<Skeleton className="h-4 w-24" />
+							<Skeleton className="h-10 w-full" />
+						</div>
+					))}
+				</CardContent>
+			</Card>
+			<Card>
+				<CardContent className="space-y-3">
+					{Array.from({ length: 3 }).map((_, index) => (
+						<Skeleton key={index} className="h-14 w-full" />
+					))}
+				</CardContent>
+			</Card>
+		</div>
+	);
+}
+
+export function DetailSkeleton() {
+	return (
+		<div className="space-y-6">
+			<div className="space-y-2">
+				<Skeleton className="h-8 w-72" />
+				<Skeleton className="h-4 w-96" />
+			</div>
+			<div className="grid gap-6 lg:grid-cols-2">
+				<Card>
+					<CardContent>
+						<Skeleton className="h-[28rem] w-full" />
+					</CardContent>
+				</Card>
+				<Card>
+					<CardContent>
+						<Skeleton className="h-[28rem] w-full" />
+					</CardContent>
+				</Card>
+			</div>
+			<Card>
+				<CardContent>
+					<TableSkeleton rows={6} />
+				</CardContent>
+			</Card>
+		</div>
+	);
+}

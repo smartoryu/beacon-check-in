@@ -1,29 +1,52 @@
-import { Link, useLoaderData } from "react-router";
+import { Link } from "react-router";
 import {
 	Badge,
+	Button,
 	Card,
 	CardContent,
 	CardHeader,
+	ErrorAlert,
 	PageHeader,
+	PageSkeleton,
 	StatCard,
 } from "#/components/ui";
 import { api } from "#/lib/api";
 import { formatDate, formatDateTime } from "#/lib/datetime";
+import { useAsync } from "#/lib/use-async";
 
 export function meta() {
 	return [{ title: "Dashboard | Beacon Check-In" }];
 }
 
-export async function clientLoader() {
-	const [summary, users] = await Promise.all([
-		api.summary(),
-		api.users({ include_deleted: true }),
-	]);
-	return { summary, users };
-}
-
 export default function DashboardPage() {
-	const { summary, users } = useLoaderData<typeof clientLoader>();
+	const { data, loading, error, refresh } = useAsync(
+		() =>
+			Promise.all([
+				api.summary(),
+				api.users({ include_deleted: true }),
+			]),
+		[],
+	);
+
+	if (loading) return <PageSkeleton cards={4} rows={6} />;
+
+	if (error || !data) {
+		return (
+			<div className="space-y-6">
+				<PageHeader
+					title="Dashboard"
+					description="A quick view of users, events, beacons and check-in activity."
+				/>
+				<ErrorAlert
+					message="Unable to load the dashboard."
+					details={error?.message}
+				/>
+				<Button onClick={refresh}>Retry</Button>
+			</div>
+		);
+	}
+
+	const [summary, users] = data;
 	const pending = summary.pending_approvals;
 
 	return (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, redirect, useLoaderData, useRevalidator } from "react-router";
+import { Navigate } from "react-router";
 import {
 	Badge,
 	Button,
@@ -11,20 +11,16 @@ import {
 	Input,
 	Modal,
 	PageHeader,
+	PageSkeleton,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
+import { useAuthUser } from "#/lib/auth-context";
 import { formatDateTime } from "#/lib/datetime";
+import { useAsync } from "#/lib/use-async";
 import type { TemporaryPasswordResponse, User } from "#/lib/types";
 
 export function meta() {
 	return [{ title: "Admins | Beacon Check-In" }];
-}
-
-export async function clientLoader() {
-	const me = await api.me();
-	if (me.role !== "super_admin") throw redirect("/dashboard");
-	const admins = await api.listAdmins(true);
-	return { me, admins };
 }
 
 type ModalState =
@@ -36,8 +32,12 @@ type ModalState =
 	| null;
 
 export default function AdminsPage() {
-	const { me, admins } = useLoaderData<typeof clientLoader>();
-	const revalidator = useRevalidator();
+	const me = useAuthUser();
+	const { data, loading, error: loadError, refresh } = useAsync(
+		() => api.listAdmins(true),
+		[],
+	);
+	const admins = data ?? [];
 	const [modal, setModal] = useState<ModalState>(null);
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
@@ -45,6 +45,18 @@ export default function AdminsPage() {
 	const [error, setError] = useState<string | null>(null);
 
 	if (me.role !== "super_admin") return <Navigate to="/dashboard" replace />;
+
+	if (loading) return <PageSkeleton cards={0} rows={6} />;
+
+	if (loadError) {
+		return (
+			<div className="space-y-6">
+				<PageHeader title="Admins" description="Manage admin accounts." />
+				<ErrorAlert message="Unable to load admins." details={loadError.message} />
+				<Button onClick={refresh}>Retry</Button>
+			</div>
+		);
+	}
 
 	function openCreate() {
 		setName("");
@@ -71,7 +83,7 @@ export default function AdminsPage() {
 			} else {
 				await api.updateAdmin(modal.admin.id, name, email);
 				setModal(null);
-				revalidator.revalidate();
+				refresh();
 			}
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Request failed");
@@ -86,7 +98,7 @@ export default function AdminsPage() {
 		try {
 			await api.deleteAdmin(admin.id);
 			setModal(null);
-			revalidator.revalidate();
+			refresh();
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Request failed");
 		} finally {
@@ -100,7 +112,7 @@ export default function AdminsPage() {
 		try {
 			const result = await api.resetAdminPassword(admin.id);
 			setModal({ type: "password", result });
-			revalidator.revalidate();
+			refresh();
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Request failed");
 		} finally {
@@ -299,14 +311,14 @@ export default function AdminsPage() {
 				open={modal?.type === "password"}
 				onClose={() => {
 					setModal(null);
-					revalidator.revalidate();
+					refresh();
 				}}
 				title="Temporary password"
 				footer={
 					<Button
 						onClick={() => {
 							setModal(null);
-							revalidator.revalidate();
+							refresh();
 						}}
 					>
 						Done

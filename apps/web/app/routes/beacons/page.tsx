@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLoaderData, useRevalidator } from "react-router";
+
 import {
 	Badge,
 	Button,
@@ -11,23 +11,18 @@ import {
 	Input,
 	Modal,
 	PageHeader,
+	PageSkeleton,
 	Select,
 	Textarea,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
+import { useAuthUser } from "#/lib/auth-context";
 import { formatDateTime } from "#/lib/datetime";
+import { useAsync } from "#/lib/use-async";
 import type { Beacon } from "#/lib/types";
 
 export function meta() {
 	return [{ title: "Beacons | Beacon Check-In" }];
-}
-
-export async function clientLoader() {
-	const [me, beacons] = await Promise.all([
-		api.me(),
-		api.listBeacons({ status: "all", include_deleted: true }),
-	]);
-	return { me, beacons };
 }
 
 type ModalState =
@@ -38,8 +33,12 @@ type ModalState =
 	| null;
 
 export default function BeaconsPage() {
-	const { me, beacons } = useLoaderData<typeof clientLoader>();
-	const revalidator = useRevalidator();
+	const me = useAuthUser();
+	const { data, loading, error: loadError, refresh } = useAsync(
+		() => api.listBeacons({ status: "all", include_deleted: true }),
+		[],
+	);
+	const beacons = useMemo(() => data ?? [], [data]);
 	const [modal, setModal] = useState<ModalState>(null);
 	const [label, setLabel] = useState("");
 	const [reason, setReason] = useState("");
@@ -101,7 +100,7 @@ export default function BeaconsPage() {
 		try {
 			await api.renameBeacon(modal.beacon.id, label);
 			setModal(null);
-			revalidator.revalidate();
+			refresh();
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Request failed");
 		} finally {
@@ -121,7 +120,7 @@ export default function BeaconsPage() {
 			const result = await api.deleteBeacon(modal.beacon.id, reason);
 			setMessage(result.message);
 			setModal(null);
-			revalidator.revalidate();
+			refresh();
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Request failed");
 		} finally {
@@ -137,7 +136,7 @@ export default function BeaconsPage() {
 			const result = await api.restoreBeacon(modal.beacon.id, reason);
 			setMessage(result.message);
 			setModal(null);
-			revalidator.revalidate();
+			refresh();
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : "Request failed");
 		} finally {
@@ -146,6 +145,18 @@ export default function BeaconsPage() {
 	}
 
 	const isSuper = me.role === "super_admin";
+
+	if (loading) return <PageSkeleton cards={4} rows={6} />;
+
+	if (loadError) {
+		return (
+			<div className="space-y-6">
+				<PageHeader title="Beacons" description="Manage registered beacons." />
+				<ErrorAlert message="Unable to load beacons." details={loadError.message} />
+				<Button onClick={refresh}>Retry</Button>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
