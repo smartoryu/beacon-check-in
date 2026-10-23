@@ -17,7 +17,9 @@ func (r *AuthRepository) SetUserPassword(ctx context.Context, userPassword *mode
 	}
 	userPassword.CreatedAt = time.Now()
 
-	query := `INSERT INTO ` + models.UserPasswordTable + ` (user_id, password_hash, created_at) VALUES ($1, $2, $3)`
+	query := `INSERT INTO ` + models.UserPasswordTable + ` (user_id, password_hash, created_at) VALUES ($1, $2, $3)
+		ON CONFLICT (user_id) DO UPDATE
+		SET password_hash = EXCLUDED.password_hash, updated_at = EXCLUDED.created_at`
 	_, err := r.pgPool.Exec(ctx, query,
 		userPassword.UserID,
 		[]byte(userPassword.PasswordHash),
@@ -25,10 +27,10 @@ func (r *AuthRepository) SetUserPassword(ctx context.Context, userPassword *mode
 	)
 
 	if err != nil {
-		r.logger.Error("failed to insert user password", "op", "SetUserPassword", "user_id", userPassword.UserID.String(), "error", err.Error())
+		r.logger.Error("failed to set user password", "op", "SetUserPassword", "user_id", userPassword.UserID.String(), "error", err.Error())
 		return err
 	}
-	r.logger.Info("user password created", "op", "SetUserPassword", "user_id", userPassword.UserID.String())
+	r.logger.Info("user password set", "op", "SetUserPassword", "user_id", userPassword.UserID.String())
 
 	return nil
 }
