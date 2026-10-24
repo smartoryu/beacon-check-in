@@ -131,9 +131,12 @@ func (h *ServerHandler) APIDocsHandler(c echo.Context) error {
 
 	// Construct the OpenAPI spec URL based on the current request
 	req := c.Request()
-	scheme := "http"
-	if req.TLS != nil {
-		scheme = "https"
+	scheme := req.Header.Get("X-Forwarded-Proto")
+	if scheme == "" {
+		scheme = "http"
+		if req.TLS != nil {
+			scheme = "https"
+		}
 	}
 	specURL := fmt.Sprintf("%s://%s/api/openapi.json", scheme, req.Host)
 
