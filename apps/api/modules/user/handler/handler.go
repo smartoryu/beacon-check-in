@@ -45,17 +45,6 @@ func NewHandler(opts *HandlerOpts) *Handler {
 	}
 }
 
-// @Summary      Create a new user
-// @Description  Creates a new user in the system
-// @Tags         User Management
-// @Security     BearerAuth
-// @Param        Authorization  header    string                      true  "Bearer {token}"
-// @Accept       json
-// @Produce      json
-// @Param        user  body      models.UserCreateRequest  true  "User payload"
-// @Success      201   {object}  models.User
-// @Failure      400   {object}  map[string]string
-// @Router       /api/v1/users [post]
 func (h *Handler) CreateUser(c echo.Context) error {
 	var req models.UserCreateRequest
 	if err := c.Bind(&req); err != nil {
@@ -114,7 +103,7 @@ func (h *Handler) ListUsers(c echo.Context) error {
 // @Param        id   path      string  true  "User ID"
 // @Success      200  {object}  models.User
 // @Failure      404  {object}  map[string]string
-// @Router       /api/v1/users/:userId [get]
+// @Router       /api/v1/users/{userId} [get]
 func (h *Handler) GetUser(c echo.Context) error {
 	idStr := c.Param("userId")
 	id, err := models.ParseUserID(idStr)
@@ -131,18 +120,6 @@ func (h *Handler) GetUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
-// @Summary      Update user
-// @Description  Updates an existing user by ID
-// @Tags         User Management
-// @Security     BearerAuth
-// @Param        Authorization  header    string                      true  "Bearer {token}"
-// @Accept       json
-// @Produce      json
-// @Param        id    path      string  true  "User ID"
-// @Param        user  body      models.UserCreateRequest  true  "User payload"
-// @Success      200   {object}  map[string]string
-// @Failure      400   {object}  map[string]string
-// @Router       /api/v1/users/:userId [put]
 func (h *Handler) UpdateUser(c echo.Context) error {
 	idStr := c.Param("userId")
 	id, err := models.ParseUserID(idStr)
@@ -177,15 +154,6 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "User updated successfully"})
 }
 
-// @Summary      Delete user
-// @Description  Deletes a user by ID
-// @Tags         User Management
-// @Security     BearerAuth
-// @Param        Authorization  header    string                      true  "Bearer {token}"
-// @Param        id   path  string  true  "User ID"
-// @Success      200  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Router       /api/v1/users/:userId [delete]
 func (h *Handler) DeleteUser(c echo.Context) error {
 	idStr := c.Param("userId")
 	id, err := models.ParseUserID(idStr)

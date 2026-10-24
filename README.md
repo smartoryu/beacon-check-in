@@ -6,6 +6,17 @@ An iBeacon attendance POC built as a ZOG monorepo.
 - **Users** self-register in the Flutter app and check in to an ongoing event. The check-in is recorded locally first (offline-first) and validated when the phone can hear the event's beacon(s).
 - The **web app** manages admins, events, beacons and the super-admin approval queue, and renders a triangulation graph for accepted check-ins.
 
+## Documentation
+
+| Document | Contents |
+| :-- | :-- |
+| [Complete guide](./docs/README.md) | Plain-language explanation, all web/mobile/API features, event form fields, check-in rules, glossary, troubleshooting and limitations. |
+| [API reference](./docs/API.md) | Every endpoint, roles, request/response examples, rejection reasons and configuration. |
+| [Swagger/OpenAPI guide](./docs/SWAGGER.md) | Interactive docs, authentication in the UI, regeneration and spec notes. |
+| [Swagger snapshot](./docs/swagger.yaml) | Generated Swagger 2.0 document. |
+
+The **event form** section in the complete guide explains every field, including the full **Coverage & floor** section (floor size, RSSI threshold, minimum beacons, coverage radius and path-loss exponent).
+
 ## Repository layout
 
 ```
@@ -16,6 +27,7 @@ beacon-check-in/
 │   └── mobile/    # Flutter: admin scanner, user check-in, offline queue
 ├── packages/
 │   └── shared-ui/ # ZOG shared React UI package (generated template; web currently uses plain Tailwind)
+├── docs/          # Complete guide, API reference and Swagger documentation
 ├── compose.yaml   # Postgres 18, Mailpit, pgweb, optional instrumentation
 ├── .moon/         # moonrepo workspace + tasks
 └── pnpm-workspace.yaml
@@ -182,7 +194,9 @@ variables.
 
 ## API
 
-- OpenAPI docs: `http://localhost:8080/api-docs`
+- Detailed endpoint reference: [`docs/API.md`](./docs/API.md)
+- Swagger/OpenAPI guide: [`docs/SWAGGER.md`](./docs/SWAGGER.md)
+- Interactive docs: `http://localhost:8080/api-docs`
 - Raw spec: `http://localhost:8080/api/openapi.json`
 - Health: `http://localhost:8080/healthz`
 - Base path: `/api/v1`
@@ -194,7 +208,7 @@ Key configuration (see `apps/api/.env.example`):
 | `SERVER_PORT` | `8080` | API port |
 | `DATABASE_URL` | local Postgres | pgx connection |
 | `JWT_SECRET_KEY` | — | JWT signing secret |
-| `CORS_ORIGINS` | `[http://localhost:3000]` | Web origin |
+| `CORS_ORIGINS` | `http://localhost:3000,...` | Comma-separated allowed web origins |
 | `MAX_OFFLINE_AGE` | `24h` | Maximum age of a queued check-in |
 | `MAX_CLOCK_SKEW` | `5m` | Tolerated future device clock skew |
 

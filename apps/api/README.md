@@ -1,4 +1,12 @@
-# Go Application
+# Beacon Check-In API
+
+Go/Echo API for Beacon Check-In. It handles authentication, roles, beacons, events, check-in validation, triangulation and dashboards.
+
+- [Complete application guide](../../docs/README.md)
+- [API reference](../../docs/API.md)
+- [Swagger/OpenAPI guide](../../docs/SWAGGER.md)
+- Interactive docs: `http://localhost:8080/api-docs`
+- Raw spec: `http://localhost:8080/api/openapi.json`
 
 This template already pre-configured basic auth, take a look at `apps/api/database/seeders/user_factory.go`.
 

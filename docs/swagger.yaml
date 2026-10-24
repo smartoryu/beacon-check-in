@@ -1,0 +1,2426 @@
+# Snapshots of the generated Beacon Check-In API Swagger/OpenAPI 2.0 spec.
+# Source of truth: apps/api/docs/swagger.yaml. Regenerate with `moon run api:generate-swagger`.
+basePath: /
+definitions:
+  models.Beacon:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      deleted_by:
+        type: string
+      device_address_type:
+        type: string
+      gatt_info:
+        additionalProperties: {}
+        type: object
+      gatt_read_at:
+        type: string
+      id:
+        type: string
+      identity_key:
+        type: string
+      label:
+        type: string
+      last_seen_at:
+        type: string
+      local_name:
+        type: string
+      major:
+        type: integer
+      metadata:
+        additionalProperties: {}
+        type: object
+      minor:
+        type: integer
+      platform_device_id:
+        type: string
+      proximity_uuid:
+        type: string
+      registered_at:
+        type: string
+      registered_by:
+        type: string
+      tx_power:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.BeaconUsage:
+    properties:
+      deleted_at:
+        type: string
+      ends_at:
+        type: string
+      event_id:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+      x:
+        type: number
+      "y":
+        type: number
+    type: object
+  models.ChangeActionRequest:
+    properties:
+      reason:
+        maxLength: 500
+        minLength: 4
+        type: string
+    required:
+    - reason
+    type: object
+  models.ChangeActionResult:
+    properties:
+      beacon:
+        $ref: '#/definitions/models.Beacon'
+      message:
+        type: string
+      mode:
+        description: deleted|restored|requested
+        type: string
+      request:
+        $ref: '#/definitions/models.ChangeRequest'
+    type: object
+  models.ChangeRequest:
+    properties:
+      action:
+        type: string
+      beacon_id:
+        type: string
+      beacon_identity:
+        type: string
+      beacon_label:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      reason:
+        type: string
+      requested_by:
+        type: string
+      requester_name:
+        type: string
+      review_note:
+        type: string
+      reviewed_at:
+        type: string
+      reviewed_by:
+        type: string
+      reviewer_name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Checkin:
+    properties:
+      accuracy_m:
+        type: number
+      client_checkin_id:
+        type: string
+      created_at:
+        type: string
+      device_info:
+        additionalProperties: {}
+        type: object
+      estimated_x:
+        type: number
+      estimated_y:
+        type: number
+      event_id:
+        type: string
+      id:
+        type: string
+      is_offline:
+        type: boolean
+      readings:
+        items:
+          $ref: '#/definitions/models.CheckinReading'
+        type: array
+      received_at:
+        type: string
+      recorded_at:
+        type: string
+      reject_reason:
+        type: string
+      status:
+        type: string
+      used_beacon_count:
+        type: integer
+      user_email:
+        type: string
+      user_id:
+        type: string
+      user_name:
+        type: string
+    type: object
+  models.CheckinReading:
+    properties:
+      beacon_id:
+        type: string
+      distance_m:
+        type: number
+      identity_key:
+        type: string
+      matched:
+        type: boolean
+      median_rssi:
+        type: integer
+      platform_device_id:
+        type: string
+      rssi_samples:
+        items:
+          type: integer
+        type: array
+      tx_power:
+        type: integer
+    type: object
+  models.CheckinReadingInput:
+    properties:
+      identity_key:
+        type: string
+      platform_device_id:
+        type: string
+      rssi_samples:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      tx_power:
+        type: integer
+    required:
+    - identity_key
+    - rssi_samples
+    type: object
+  models.CreateAdminRequest:
+    properties:
+      email:
+        example: jane@example.com
+        type: string
+      name:
+        example: Jane Admin
+        maxLength: 120
+        minLength: 2
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  models.CreateChangeRequest:
+    properties:
+      action:
+        enum:
+        - delete
+        - restore
+        type: string
+      beacon_id:
+        type: string
+      reason:
+        maxLength: 500
+        minLength: 4
+        type: string
+    required:
+    - action
+    - beacon_id
+    - reason
+    type: object
+  models.CreateEventRequest:
+    properties:
+      address:
+        type: string
+      beacons:
+        items:
+          $ref: '#/definitions/models.EventBeaconInput'
+        minItems: 1
+        type: array
+      coverage_radius_m:
+        type: number
+      description:
+        type: string
+      ends_at:
+        type: string
+      floor_height_m:
+        type: number
+      floor_width_m:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      min_beacons:
+        type: integer
+      path_loss_exponent:
+        type: number
+      place_name:
+        maxLength: 200
+        minLength: 1
+        type: string
+      rssi_threshold_dbm:
+        type: integer
+      starts_at:
+        type: string
+      timezone:
+        type: string
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - beacons
+    - ends_at
+    - place_name
+    - starts_at
+    - title
+    type: object
+  models.CreateRefreshTokenRequest:
+    properties:
+      expires_at:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      ip_address:
+        example: 192.168.1.1
+        type: string
+      session_id:
+        type: string
+      token_hash:
+        type: string
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    required:
+    - expires_at
+    - token_hash
+    - user_id
+    type: object
+  models.CreateSessionRequest:
+    properties:
+      device_fingerprint:
+        type: string
+      device_name:
+        type: string
+      expires_at:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      ip_address:
+        example: 192.168.1.1
+        type: string
+      token_hash:
+        type: string
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    required:
+    - expires_at
+    - token_hash
+    - user_id
+    type: object
+  models.Event:
+    properties:
+      address:
+        type: string
+      beacons:
+        items:
+          $ref: '#/definitions/models.EventBeacon'
+        type: array
+      checkin_count:
+        type: integer
+      coverage_radius_m:
+        type: number
+      created_at:
+        type: string
+      created_by:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      ends_at:
+        type: string
+      floor_height_m:
+        type: number
+      floor_width_m:
+        type: number
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      min_beacons:
+        type: integer
+      path_loss_exponent:
+        type: number
+      place_name:
+        type: string
+      rssi_threshold_dbm:
+        type: integer
+      starts_at:
+        type: string
+      timezone:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.EventBeacon:
+    properties:
+      beacon_deleted_at:
+        type: string
+      beacon_id:
+        type: string
+      identity_key:
+        type: string
+      label:
+        type: string
+      local_name:
+        type: string
+      tx_power:
+        type: integer
+      tx_power_override:
+        type: integer
+      x:
+        type: number
+      "y":
+        type: number
+    type: object
+  models.EventBeaconInput:
+    properties:
+      beacon_id:
+        type: string
+      tx_power_override:
+        type: integer
+      x:
+        type: number
+      "y":
+        type: number
+    required:
+    - beacon_id
+    type: object
+  models.InitiateEmailVerificationRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      redirect_to:
+        example: https://example.com/verified
+        type: string
+    required:
+    - email
+    type: object
+  models.LookupItem:
+    properties:
+      beacon:
+        $ref: '#/definitions/models.Beacon'
+      identity_key:
+        type: string
+      status:
+        description: registered|deleted|unknown
+        type: string
+    type: object
+  models.LookupRequest:
+    properties:
+      identities:
+        items:
+          type: string
+        maxItems: 200
+        minItems: 1
+        type: array
+    required:
+    - identities
+    type: object
+  models.LookupResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/models.LookupItem'
+        type: array
+    type: object
+  models.RecentCheckin:
+    properties:
+      event_id:
+        type: string
+      event_title:
+        type: string
+      id:
+        type: string
+      recorded_at:
+        type: string
+      status:
+        type: string
+      user_name:
+        type: string
+    type: object
+  models.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  models.RefreshToken:
+    properties:
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      ip_address:
+        items:
+          type: integer
+        type: array
+      revoked_at:
+        type: string
+      revoked_by:
+        type: string
+      session_id:
+        type: string
+      token_hash:
+        items:
+          type: integer
+        type: array
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.RegisterBeaconRequest:
+    properties:
+      device_address_type:
+        type: string
+      gatt_info:
+        additionalProperties: {}
+        type: object
+      label:
+        example: Lobby North
+        maxLength: 120
+        minLength: 1
+        type: string
+      local_name:
+        type: string
+      major:
+        example: 1
+        maximum: 65535
+        minimum: 0
+        type: integer
+      metadata:
+        additionalProperties: {}
+        type: object
+      minor:
+        example: 1
+        maximum: 65535
+        minimum: 0
+        type: integer
+      platform_device_id:
+        type: string
+      proximity_uuid:
+        example: f7826da6-4fa2-4e98-8024-bc5b71e0893e
+        type: string
+      rssi_samples:
+        items:
+          type: integer
+        type: array
+      tx_power:
+        example: -59
+        type: integer
+    required:
+    - label
+    - proximity_uuid
+    type: object
+  models.ResendEmailVerificationRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    required:
+    - email
+    type: object
+  models.ReviewChangeRequest:
+    properties:
+      note:
+        type: string
+    type: object
+  models.RevokeEmailVerificationRequest:
+    properties:
+      token:
+        example: 01FZ...
+        type: string
+    required:
+    - token
+    type: object
+  models.Session:
+    properties:
+      created_at:
+        type: string
+      device_fingerprint:
+        type: string
+      device_name:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      ip_address:
+        items:
+          type: integer
+        type: array
+      refreshed_at:
+        type: string
+      revoked_at:
+        type: string
+      revoked_by:
+        type: string
+      token_hash:
+        type: string
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.SetEventBeaconsRequest:
+    properties:
+      beacons:
+        items:
+          $ref: '#/definitions/models.EventBeaconInput'
+        minItems: 1
+        type: array
+    required:
+    - beacons
+    type: object
+  models.SetPasswordRequest:
+    properties:
+      password:
+        example: secure.password
+        minLength: 8
+        type: string
+      password_confirmation:
+        example: secret.password
+        type: string
+      user_id:
+        type: string
+    required:
+    - password
+    - password_confirmation
+    - user_id
+    type: object
+  models.SignInResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      session_id:
+        type: string
+      token_expiry:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  models.SignInWithEmailRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secure.password
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.SignInWithUsernameRequest:
+    properties:
+      password:
+        example: secure.password
+        type: string
+      username:
+        example: user123
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  models.SignUpRequest:
+    properties:
+      email:
+        example: jane@example.com
+        type: string
+      name:
+        example: Jane Doe
+        maxLength: 120
+        minLength: 2
+        type: string
+      password:
+        example: secure.password
+        minLength: 8
+        type: string
+      password_confirmation:
+        example: secure.password
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - password_confirmation
+    type: object
+  models.SubmitCheckinRequest:
+    properties:
+      client_checkin_id:
+        type: string
+      device_info:
+        additionalProperties: {}
+        type: object
+      readings:
+        items:
+          $ref: '#/definitions/models.CheckinReadingInput'
+        minItems: 1
+        type: array
+      recorded_at:
+        type: string
+    required:
+    - client_checkin_id
+    - readings
+    - recorded_at
+    type: object
+  models.SubmitCheckinResponse:
+    properties:
+      checkin:
+        $ref: '#/definitions/models.Checkin'
+      duplicate:
+        type: boolean
+      observed_beacons:
+        items:
+          type: string
+        type: array
+      reason:
+        type: string
+    type: object
+  models.Summary:
+    properties:
+      active_beacons:
+        type: integer
+      checkins_today:
+        type: integer
+      deleted_beacons:
+        type: integer
+      event_counts:
+        additionalProperties:
+          type: integer
+        type: object
+      pending_approvals:
+        type: integer
+      recent_checkins:
+        items:
+          $ref: '#/definitions/models.RecentCheckin'
+        type: array
+      user_counts:
+        additionalProperties:
+          type: integer
+        type: object
+    type: object
+  models.TemporaryPasswordResponse:
+    properties:
+      temporary_password:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  models.UpdateAdminRequest:
+    properties:
+      email:
+        example: jane@example.com
+        type: string
+      name:
+        example: Jane Admin
+        maxLength: 120
+        minLength: 2
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  models.UpdateBeaconRequest:
+    properties:
+      label:
+        example: Lobby North
+        maxLength: 120
+        minLength: 1
+        type: string
+    required:
+    - label
+    type: object
+  models.UpdateEventRequest:
+    properties:
+      address:
+        type: string
+      beacons:
+        items:
+          $ref: '#/definitions/models.EventBeaconInput'
+        minItems: 1
+        type: array
+      coverage_radius_m:
+        type: number
+      description:
+        type: string
+      ends_at:
+        type: string
+      floor_height_m:
+        type: number
+      floor_width_m:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      min_beacons:
+        type: integer
+      path_loss_exponent:
+        type: number
+      place_name:
+        maxLength: 200
+        minLength: 1
+        type: string
+      rssi_threshold_dbm:
+        type: integer
+      starts_at:
+        type: string
+      timezone:
+        type: string
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - beacons
+    - ends_at
+    - place_name
+    - starts_at
+    - title
+    type: object
+  models.UpdatePasswordRequest:
+    properties:
+      current_password:
+        example: current.password
+        minLength: 8
+        type: string
+      new_password:
+        example: secure.password
+        minLength: 8
+        type: string
+      password_confirmation:
+        example: secret.password
+        type: string
+    required:
+    - current_password
+    - new_password
+    - password_confirmation
+    type: object
+  models.UpdateRefreshTokenRequest:
+    properties:
+      ip_address:
+        example: 192.168.1.1
+        type: string
+      revoked_at:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      revoked_by:
+        type: string
+      token_id:
+        type: string
+      user_agent:
+        type: string
+    required:
+    - token_id
+    type: object
+  models.UpdateSessionRequest:
+    properties:
+      device_fingerprint:
+        type: string
+      device_name:
+        type: string
+      ip_address:
+        example: 192.168.1.1
+        type: string
+      refreshed_at:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      revoked_at:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      revoked_by:
+        type: string
+      session_id:
+        type: string
+      user_agent:
+        type: string
+    required:
+    - session_id
+    type: object
+  models.User:
+    properties:
+      avatar_url:
+        type: string
+      ban_expires:
+        type: string
+      ban_reason:
+        type: string
+      banned_at:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      email_verified_at:
+        type: string
+      id:
+        type: string
+      last_login_at:
+        type: string
+      metadata:
+        $ref: '#/definitions/models.UserMetadata'
+      must_change_password:
+        type: boolean
+      role:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  models.UserMetadata:
+    properties:
+      timezone:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: REST API for Beacon Check-In, an iBeacon attendance system. Admins
+    register and place beacons on event floor plans; users check in from the Flutter
+    app using nearby beacon readings. Interactive documentation is available at /api-docs
+    and the raw OpenAPI document at /api/openapi.json.
+  title: Beacon Check-In API
+  version: "1.0"
+paths:
+  /api/v1/admins:
+    get:
+      description: Lists admin and super admin accounts, including soft-deleted when
+        requested.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List admins
+      tags:
+      - Admin Management
+    post:
+      consumes:
+      - application/json
+      description: Creates an admin account and returns a one-time temporary password.
+      parameters:
+      - description: Admin payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.TemporaryPasswordResponse'
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create an admin
+      tags:
+      - Admin Management
+  /api/v1/admins/{id}:
+    delete:
+      description: Soft-deletes an admin and revokes their sessions.
+      parameters:
+      - description: Admin ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an admin
+      tags:
+      - Admin Management
+    get:
+      description: Returns an admin or super admin by id.
+      parameters:
+      - description: Admin ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get an admin
+      tags:
+      - Admin Management
+    put:
+      consumes:
+      - application/json
+      description: Updates an admin's name and email. Roles are immutable.
+      parameters:
+      - description: Admin ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Admin payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update an admin
+      tags:
+      - Admin Management
+  /api/v1/admins/{id}/reset-password:
+    post:
+      description: Generates a new one-time temporary password and forces a change
+        on next sign-in.
+      parameters:
+      - description: Admin ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Reset an admin password
+      tags:
+      - Admin Management
+  /api/v1/auth/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Updates the authenticated user's password and clears the forced-change
+        flag.
+      parameters:
+      - description: Password payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdatePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change the current user's password
+      tags:
+      - Auth - Account
+  /api/v1/auth/me:
+    get:
+      description: Returns the authenticated user's profile, role and onboarding flags.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get the current user
+      tags:
+      - Auth - Account
+  /api/v1/auth/password:
+    post:
+      consumes:
+      - application/json
+      description: Sets a new password for a user
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Password payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set user password
+      tags:
+      - Auth - User Password
+  /api/v1/auth/password/{userId}:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing user's password
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Password payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdatePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user password
+      tags:
+      - Auth - User Password
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a valid refresh JWT for a new access token.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SignInResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Refresh an access token
+      tags:
+      - Auth - Authentication
+  /api/v1/auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new refresh token
+      parameters:
+      - description: Refresh token payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateRefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create refresh token
+      tags:
+      - Auth - User Session
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing refresh token
+      parameters:
+      - description: Refresh token payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateRefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update refresh token
+      tags:
+      - Auth - User Session
+  /api/v1/auth/refresh-token/:tokenId:
+    delete:
+      description: Deletes a refresh token by its ID
+      parameters:
+      - description: Token ID
+        in: path
+        name: tokenId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete refresh token
+      tags:
+      - Auth - User Session
+    get:
+      description: Retrieves a refresh token by its ID
+      parameters:
+      - description: Token ID
+        in: path
+        name: tokenId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RefreshToken'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get refresh token
+      tags:
+      - Auth - User Session
+  /api/v1/auth/session:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new session
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Session payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create session
+      tags:
+      - Auth - User Session
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing session
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Session payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update session
+      tags:
+      - Auth - User Session
+  /api/v1/auth/session/:sessionId:
+    delete:
+      description: Deletes a session by its ID
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete session
+      tags:
+      - Auth - User Session
+    get:
+      description: Retrieves a session by its ID
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Session'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get session
+      tags:
+      - Auth - User Session
+  /api/v1/auth/signin/email:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user using email and password
+      parameters:
+      - description: Sign in payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignInWithEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SignInResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Sign in with email
+      tags:
+      - Auth - Authentication
+  /api/v1/auth/signin/username:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user using username and password
+      parameters:
+      - description: Sign in payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignInWithUsernameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SignInResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Sign in with username
+      tags:
+      - Auth - Authentication
+  /api/v1/auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Creates a self-registered user account and returns an authenticated
+        session.
+      parameters:
+      - description: Sign up payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.SignInResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a user account
+      tags:
+      - Auth - Authentication
+  /api/v1/auth/verification/email/initiate:
+    post:
+      consumes:
+      - application/json
+      description: Generates and sends a verification token to the user's email
+      parameters:
+      - description: Initiate verification payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.InitiateEmailVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Initiate email verification
+      tags:
+      - Auth - Verification
+  /api/v1/auth/verification/email/resend:
+    post:
+      consumes:
+      - application/json
+      description: Generates and sends a new verification token to the user's email,
+        or resends if still valid
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Resend verification payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ResendEmailVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Resend email verification
+      tags:
+      - Auth - Verification
+  /api/v1/auth/verification/email/revoke:
+    post:
+      consumes:
+      - application/json
+      description: Revokes (deletes) the email verification token for the user
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Revoke verification payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RevokeEmailVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Revoke email verification
+      tags:
+      - Auth - Verification
+  /api/v1/auth/verification/email/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validates the email verification token for the user (token-only
+        payload)
+      parameters:
+      - description: 'Validate verification payload (json: {\'
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Validate email verification
+      tags:
+      - Auth - Verification
+  /api/v1/auth/verify-email:
+    get:
+      description: Validates an email verification token provided as query parameter
+        `token`.
+      parameters:
+      - description: Verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      - description: Optional absolute URL to redirect after verification (will receive
+          `verified` and optional `error` query params)
+        format: url
+        in: query
+        name: redirect_to
+        type: string
+      responses:
+        "200":
+          description: Email successfully verified (JSON)
+          schema:
+            additionalProperties: true
+            type: object
+        "302":
+          description: Redirect to `redirect_to` with verification result
+          schema:
+            type: string
+        "400":
+          description: Bad request (missing token or invalid redirect_to)
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid or expired token
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Validate email via link
+      tags:
+      - Auth - Verification
+  /api/v1/beacon-requests:
+    get:
+      description: Lists pending/approved/rejected beacon requests (super admin).
+      parameters:
+      - description: pending|approved|rejected
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ChangeRequest'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List beacon change requests
+      tags:
+      - Beacon Approvals
+    post:
+      consumes:
+      - application/json
+      description: Requests a beacon delete or restore. Super admin approval is required.
+      parameters:
+      - description: Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateChangeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ChangeRequest'
+      security:
+      - BearerAuth: []
+      summary: Create a beacon change request
+      tags:
+      - Beacon Approvals
+  /api/v1/beacon-requests/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Applies the requested delete/restore (super admin).
+      parameters:
+      - description: Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Review note
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/models.ReviewChangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ChangeRequest'
+      security:
+      - BearerAuth: []
+      summary: Approve a beacon change request
+      tags:
+      - Beacon Approvals
+  /api/v1/beacon-requests/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Rejects the request (super admin).
+      parameters:
+      - description: Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Review note
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/models.ReviewChangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ChangeRequest'
+      security:
+      - BearerAuth: []
+      summary: Reject a beacon change request
+      tags:
+      - Beacon Approvals
+  /api/v1/beacons:
+    get:
+      description: Lists registered beacons with optional search/status filters.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Beacon'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List beacons
+      tags:
+      - Beacon Management
+    post:
+      consumes:
+      - application/json
+      description: Registers a scanned iBeacon with its advertisement metadata and
+        optional GATT info.
+      parameters:
+      - description: Beacon payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterBeaconRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Beacon'
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Register a beacon
+      tags:
+      - Beacon Management
+  /api/v1/beacons/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Super admins delete directly; admins create an approval request.
+      parameters:
+      - description: Beacon ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ChangeActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ChangeActionResult'
+      security:
+      - BearerAuth: []
+      summary: Delete or request deletion of a beacon
+      tags:
+      - Beacon Management
+    get:
+      description: Returns a beacon by id.
+      parameters:
+      - description: Beacon ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Beacon'
+      security:
+      - BearerAuth: []
+      summary: Get a beacon
+      tags:
+      - Beacon Management
+    patch:
+      consumes:
+      - application/json
+      description: Updates only the beacon label.
+      parameters:
+      - description: Beacon ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Label
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateBeaconRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Beacon'
+      security:
+      - BearerAuth: []
+      summary: Rename a beacon
+      tags:
+      - Beacon Management
+  /api/v1/beacons/{id}/restore:
+    post:
+      consumes:
+      - application/json
+      description: Super admins restore directly; admins create an approval request.
+      parameters:
+      - description: Beacon ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ChangeActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ChangeActionResult'
+      security:
+      - BearerAuth: []
+      summary: Restore or request restoration of a beacon
+      tags:
+      - Beacon Management
+  /api/v1/beacons/{id}/usage:
+    get:
+      description: Lists events that use this beacon.
+      parameters:
+      - description: Beacon ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.BeaconUsage'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Beacon usage
+      tags:
+      - Beacon Management
+  /api/v1/beacons/lookup:
+    post:
+      consumes:
+      - application/json
+      description: Batch-checks which scanned identity keys are registered, deleted
+        or unknown.
+      parameters:
+      - description: Identities
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.LookupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LookupResponse'
+      security:
+      - BearerAuth: []
+      summary: Look up beacon identities
+      tags:
+      - Beacon Management
+  /api/v1/dashboard/summary:
+    get:
+      description: Counts users, events, beacons, check-ins and pending approvals
+        plus recent activity.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Summary'
+      security:
+      - BearerAuth: []
+      summary: Dashboard summary
+      tags:
+      - Dashboard
+  /api/v1/events:
+    get:
+      description: Lists events with optional status/search filters.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Event'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List events
+      tags:
+      - Event Management
+    post:
+      consumes:
+      - application/json
+      description: Creates an event with at least one positioned beacon.
+      parameters:
+      - description: Event payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Event'
+      security:
+      - BearerAuth: []
+      summary: Create an event
+      tags:
+      - Event Management
+  /api/v1/events/{id}:
+    delete:
+      description: Soft-deletes an event; past check-ins are preserved.
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an event
+      tags:
+      - Event Management
+    get:
+      description: Returns an event with its beacons and check-in count.
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Event'
+      security:
+      - BearerAuth: []
+      summary: Get an event
+      tags:
+      - Event Management
+    put:
+      consumes:
+      - application/json
+      description: Updates an event and replaces its beacon placements.
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Event payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Event'
+      security:
+      - BearerAuth: []
+      summary: Update an event
+      tags:
+      - Event Management
+  /api/v1/events/{id}/beacons:
+    put:
+      consumes:
+      - application/json
+      description: Replaces the event's beacon set and floor positions.
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Beacon placements
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SetEventBeaconsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Event'
+      security:
+      - BearerAuth: []
+      summary: Replace event beacons
+      tags:
+      - Event Management
+  /api/v1/events/{id}/checkins:
+    get:
+      description: Lists accepted and rejected attempts for an event (admin).
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: accepted|rejected|all
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Checkin'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List event check-ins
+      tags:
+      - Check-in
+    post:
+      consumes:
+      - application/json
+      description: Idempotent offline-first check-in. The event window is validated
+        against recorded_at.
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Check-in payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SubmitCheckinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SubmitCheckinResponse'
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.SubmitCheckinResponse'
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Submit a check-in
+      tags:
+      - Check-in
+  /api/v1/events/active:
+    get:
+      description: Returns non-deleted events that have not ended, with beacon identities
+        for mobile check-in.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Event'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Active and upcoming events
+      tags:
+      - Event Management
+  /api/v1/me/checkins:
+    get:
+      description: Lists the authenticated user's local/server check-in history.
+      parameters:
+      - description: accepted|rejected|all
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Checkin'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List my check-ins
+      tags:
+      - Check-in
+  /api/v1/users:
+    get:
+      description: Retrieves a list of users
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - User Management
+  /api/v1/users/{userId}:
+    get:
+      description: Retrieves a user by their ID
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user details
+      tags:
+      - User Management
+  /healthz:
+    get:
+      description: Checks the health of the service
+      responses: {}
+      summary: Service healthcheck
+      tags:
+      - General Information
+securityDefinitions:
+  BearerAuth:
+    description: 'Bearer JWT access token. Format: "Bearer <access_token>".'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

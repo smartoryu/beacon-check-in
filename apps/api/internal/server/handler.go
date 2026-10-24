@@ -142,7 +142,7 @@ func (h *ServerHandler) APIDocsHandler(c echo.Context) error {
 		scalar.WithSpecURL(specURL),
 		scalar.WithAuthenticationOpts(
 			scalar.WithCustomSecurity(),
-			scalar.WithPreferredSecurityScheme("bearerAuth"),
+			scalar.WithPreferredSecurityScheme("BearerAuth"),
 			scalar.WithHTTPBearerToken("your-bearer-token-here"),
 		),
 		scalar.WithServers(scalar.Server{
