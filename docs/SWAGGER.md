@@ -12,6 +12,12 @@ The Beacon Check-In API publishes generated Swagger 2.0 documentation and an int
 
 The interactive page is powered by [`scalar-go`](https://github.com/bdpiprava/scalar-go) and reads the embedded `swagger.json`. It is served by the API itself, so it is available anywhere the API is running.
 
+API docs are controlled by `ENABLE_API_DOCS`:
+
+- local `.env.example`: `true`;
+- production example `infra/deploy/.env.example`: `true` for the POC;
+- set it to `false` if you do not want to expose the endpoint list publicly.
+
 ## Files
 
 | File | Description |
