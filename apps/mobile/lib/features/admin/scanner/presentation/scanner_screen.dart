@@ -42,162 +42,29 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   Future<void> _openRegister(DiscoveredBeacon beacon) async {
-    final labelController = TextEditingController(
-      text: beacon.localName ?? 'Beacon ${beacon.major}:${beacon.minor}',
-    );
-    var label = labelController.text;
-    var readGatt = false;
-    var submitting = false;
-    String? error;
-
-    await showModalBottomSheet<void>(
+    final registered = await showModalBottomSheet<Beacon>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          Future<void> submit() async {
-            if (label.trim().isEmpty) {
-              setSheetState(() => error = 'Label is required.');
-              return;
-            }
-            setSheetState(() {
-              submitting = true;
-              error = null;
-            });
-            try {
-              final registered = await _controller.register(
-                discovered: beacon,
-                label: label.trim(),
-                readGatt: readGatt,
-              );
-              if (context.mounted) Navigator.of(context).pop();
-              if (mounted) {
-                ScaffoldMessenger.of(this.context).showSnackBar(
-                  SnackBar(content: Text('Registered ${registered.label}')),
-                );
-              }
-            } on ApiException catch (exception) {
-              setSheetState(() {
-                submitting = false;
-                error = exception.message;
-              });
-            } catch (exception) {
-              setSheetState(() {
-                submitting = false;
-                error = exception.toString();
-              });
-            }
-          }
-
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              0,
-              16,
-              16 + MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Register beacon',
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    beacon.identityKey,
-                    style: const TextStyle(fontFamily: 'monospace'),
-                  ),
-                  const SizedBox(height: 12),
-                  if (error != null) ...[
-                    Card(
-                      color: Theme.of(context).colorScheme.errorContainer,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(error!),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Label',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: labelController,
-                    onChanged: (value) => label = value,
-                    textInputAction: TextInputAction.done,
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Read GATT details'),
-                    subtitle: Text(
-                      beacon.deviceId == null
-                          ? 'Device address unavailable on this platform.'
-                          : 'Battery, firmware, model and manufacturer (optional).',
-                    ),
-                    value: readGatt,
-                    onChanged: beacon.deviceId == null
-                        ? null
-                        : (value) => setSheetState(() => readGatt = value),
-                  ),
-                  ExpansionTile(
-                    title: const Text('Captured advertisement'),
-                    childrenPadding: const EdgeInsets.only(bottom: 8),
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          const JsonEncoder.withIndent('  ')
-                              .convert(beacon.toMetadataJson()),
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: submitting ? null : submit,
-                    child: submitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Register beacon'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+      builder: (context) =>
+          _RegisterBeaconSheet(beacon: beacon, controller: _controller),
     );
-    labelController.dispose();
+    if (registered != null && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Registered ${registered.label}')));
+    }
   }
 
   Future<void> _requestRestore(Beacon beacon) async {
-    final reasonController = TextEditingController();
+    var reason = '';
     final submitted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Request restore: ${beacon.label}'),
-        content: TextField(
-          controller: reasonController,
+        content: TextFormField(
+          initialValue: '',
+          onChanged: (value) => reason = value,
           decoration: const InputDecoration(
             labelText: 'Reason',
             border: OutlineInputBorder(),
@@ -218,7 +85,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     );
     if (submitted != true) return;
     try {
-      await _controller.requestRestore(beacon.id, reasonController.text.trim());
+      await _controller.requestRestore(beacon.id, reason.trim());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -368,6 +235,168 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+class _RegisterBeaconSheet extends StatefulWidget {
+  const _RegisterBeaconSheet({required this.beacon, required this.controller});
+
+  final DiscoveredBeacon beacon;
+  final ScannerController controller;
+
+  @override
+  State<_RegisterBeaconSheet> createState() => _RegisterBeaconSheetState();
+}
+
+class _RegisterBeaconSheetState extends State<_RegisterBeaconSheet> {
+  late final TextEditingController _labelController;
+  bool _readGatt = false;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _labelController = TextEditingController(
+      text:
+          widget.beacon.localName ??
+          'Beacon ${widget.beacon.major}:${widget.beacon.minor}',
+    );
+  }
+
+  @override
+  void dispose() {
+    _labelController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final label = _labelController.text.trim();
+    if (label.isEmpty) {
+      setState(() => _error = 'Label is required.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      final registered = await widget.controller.register(
+        discovered: widget.beacon,
+        label: label,
+        readGatt: _readGatt,
+      );
+      if (mounted) Navigator.of(context).pop(registered);
+    } on ApiException catch (exception) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = exception.message;
+      });
+    } catch (exception) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = exception.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        16 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Register beacon',
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              widget.beacon.identityKey,
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+            const SizedBox(height: 12),
+            if (_error != null) ...[
+              Card(
+                color: Theme.of(context).colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(_error!),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Label',
+                border: OutlineInputBorder(),
+              ),
+              controller: _labelController,
+              textInputAction: TextInputAction.done,
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Read GATT details'),
+              subtitle: Text(
+                widget.beacon.deviceId == null
+                    ? 'Device address unavailable on this platform.'
+                    : 'Battery, firmware, model and manufacturer (optional).',
+              ),
+              value: _readGatt,
+              onChanged: widget.beacon.deviceId == null
+                  ? null
+                  : (value) => setState(() => _readGatt = value),
+            ),
+            ExpansionTile(
+              title: const Text('Captured advertisement'),
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    const JsonEncoder.withIndent('  ')
+                        .convert(widget.beacon.toMetadataJson()),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              child: _submitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Register beacon'),
+            ),
+          ],
+        ),
       ),
     );
   }
