@@ -10,7 +10,12 @@ void main() {
     expect(controller.value.phase, BlePhase.scanning);
     expect(controller.value.isScanning, isTrue);
 
-    controller.markAdvertisement(beaconCount: 2, nearestRssi: -55);
+    controller.markAdvertisement(
+      advertisementCount: 5,
+      beaconCount: 2,
+      nearestRssi: -55,
+    );
+    expect(controller.value.advertisementCount, 5);
     expect(controller.value.beaconCount, 2);
     expect(controller.value.nearestRssi, -55);
     expect(controller.value.lastAdvertisementAt, isNotNull);

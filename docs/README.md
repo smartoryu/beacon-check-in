@@ -804,11 +804,15 @@ The complete infrastructure runbook is in [`infra/README.md`](../infra/README.md
 ### “I can’t see any beacons while checking in”
 
 1. Confirm Bluetooth is on and permission is granted.
-2. Make sure the phone is within a few metres of a beacon.
-3. Confirm the beacon is an iBeacon and its UUID/major/minor matches the event beacon.
-4. Check that the beacon is attached to the event.
-5. Replace the beacon battery if the signal is very weak.
-6. Use the debug simulation to verify the app flow without hardware.
+2. **Android:** allow **Location** permission and turn **Location services** on. The app uses RSSI for position estimation, so Android requires location access for BLE scans. The app must not use `neverForLocation`, because Android can filter iBeacon advertisements when that flag is present.
+3. Read the scanner banner. It shows `N advertisement(s) · M iBeacon(s) · nearest RSSI`.
+   - `0 advertisements`: Bluetooth/permission/location/scan problem.
+   - Advertisements but `0 iBeacon(s)`: the device is advertising, but not in the iBeacon format the app understands.
+4. Make sure the phone is within a few metres of a beacon.
+5. Confirm the beacon is an iBeacon and its UUID/major/minor matches the event beacon.
+6. Check that the beacon is attached to the event.
+7. Replace the beacon battery if the signal is very weak.
+8. Use the debug simulation to verify the app flow without hardware.
 
 ### “Check-in rejected: not_enough_beacons”
 

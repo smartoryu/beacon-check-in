@@ -42,6 +42,21 @@ firebase appdistribution:testers:add --group-alias testers you@example.com \
   --project beacon-check-in-4357e
 ```
 
+## BLE permissions
+
+Android requires both **Nearby devices** and **Location** permission, and Location services must be turned on. The app uses RSSI for position estimation, so the manifest must not use `usesPermissionFlags="neverForLocation"` — Android can filter iBeacon advertisements when that flag is present.
+
+The scanner banner shows:
+
+```text
+N advertisement(s) · M iBeacon(s) · nearest <rssi> dBm
+```
+
+- `0 advertisements`: Bluetooth, permission, location or scan problem.
+- Advertisements but `0 iBeacon(s)`: the device is not advertising in iBeacon format, or its UUID/major/minor does not match.
+
+On iOS, allow Bluetooth when prompted; location permission is not required for CoreBluetooth scanning.
+
 ## Run
 
 ```bash

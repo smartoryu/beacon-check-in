@@ -7,6 +7,7 @@ enum BlePhase {
   permissionDenied,
   permanentlyDenied,
   bluetoothOff,
+  locationDisabled,
   unsupported,
   error,
 }
@@ -16,6 +17,7 @@ class BleStatus {
     required this.phase,
     required this.message,
     this.lastAdvertisementAt,
+    this.advertisementCount = 0,
     this.beaconCount = 0,
     this.nearestRssi,
     this.error,
@@ -24,6 +26,7 @@ class BleStatus {
   final BlePhase phase;
   final String message;
   final DateTime? lastAdvertisementAt;
+  final int advertisementCount;
   final int beaconCount;
   final int? nearestRssi;
   final String? error;
@@ -37,26 +40,24 @@ class BleStatus {
     BlePhase? phase,
     String? message,
     DateTime? lastAdvertisementAt,
+    int? advertisementCount,
     int? beaconCount,
     int? nearestRssi,
     String? error,
-  }) =>
-      BleStatus(
-        phase: phase ?? this.phase,
-        message: message ?? this.message,
-        lastAdvertisementAt: lastAdvertisementAt ?? this.lastAdvertisementAt,
-        beaconCount: beaconCount ?? this.beaconCount,
-        nearestRssi: nearestRssi ?? this.nearestRssi,
-        error: error ?? this.error,
-      );
+  }) => BleStatus(
+    phase: phase ?? this.phase,
+    message: message ?? this.message,
+    lastAdvertisementAt: lastAdvertisementAt ?? this.lastAdvertisementAt,
+    advertisementCount: advertisementCount ?? this.advertisementCount,
+    beaconCount: beaconCount ?? this.beaconCount,
+    nearestRssi: nearestRssi ?? this.nearestRssi,
+    error: error ?? this.error,
+  );
 }
 
 class BleStatusController extends ValueNotifier<BleStatus> {
   BleStatusController()
-      : super(const BleStatus(
-          phase: BlePhase.idle,
-          message: 'Bluetooth ready',
-        ));
+    : super(const BleStatus(phase: BlePhase.idle, message: 'Bluetooth ready'));
 
   void setPhase(BlePhase phase, String message, {String? error}) {
     value = BleStatus(phase: phase, message: message, error: error);
@@ -69,20 +70,22 @@ class BleStatusController extends ValueNotifier<BleStatus> {
     );
   }
 
-  void markAdvertisement({required int beaconCount, int? nearestRssi}) {
+  void markAdvertisement({
+    required int advertisementCount,
+    required int beaconCount,
+    int? nearestRssi,
+  }) {
     value = value.copyWith(
       phase: BlePhase.scanning,
       message: 'Scanning for iBeacons…',
       lastAdvertisementAt: DateTime.now().toUtc(),
+      advertisementCount: advertisementCount,
       beaconCount: beaconCount,
       nearestRssi: nearestRssi,
     );
   }
 
   void markIdle() {
-    value = value.copyWith(
-      phase: BlePhase.ready,
-      message: 'Bluetooth ready',
-    );
+    value = value.copyWith(phase: BlePhase.ready, message: 'Bluetooth ready');
   }
 }

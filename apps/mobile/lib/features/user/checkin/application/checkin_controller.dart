@@ -35,14 +35,13 @@ class CheckinScanState {
     String? error,
     QueuedCheckin? recorded,
     bool clearError = false,
-  }) =>
-      CheckinScanState(
-        scanning: scanning ?? this.scanning,
-        secondsLeft: secondsLeft ?? this.secondsLeft,
-        discovered: discovered ?? this.discovered,
-        error: clearError ? null : (error ?? this.error),
-        recorded: recorded ?? this.recorded,
-      );
+  }) => CheckinScanState(
+    scanning: scanning ?? this.scanning,
+    secondsLeft: secondsLeft ?? this.secondsLeft,
+    discovered: discovered ?? this.discovered,
+    error: clearError ? null : (error ?? this.error),
+    recorded: recorded ?? this.recorded,
+  );
 }
 
 class CheckinController extends ChangeNotifier {
@@ -53,10 +52,10 @@ class CheckinController extends ChangeNotifier {
     required CheckinQueue queue,
     required SyncWorker syncWorker,
     BeaconScanService? scanService,
-  })  : _api = api,
-        _queue = queue,
-        _syncWorker = syncWorker,
-        _scanService = scanService ?? BeaconScanService();
+  }) : _api = api,
+       _queue = queue,
+       _syncWorker = syncWorker,
+       _scanService = scanService ?? BeaconScanService();
 
   final Event event;
   final String userId;
@@ -86,8 +85,22 @@ class CheckinController extends ChangeNotifier {
 
     _subscription ??= _scanService.results.listen((result) {
       final packet = IBeaconParser.parseScanResult(result);
-      if (packet == null) return;
-      if (!event.beacons.any((beacon) => beacon.identityKey == packet.identityKey)) {
+      if (packet == null) {
+        _scanService.status.markAdvertisement(
+          advertisementCount: _scanService.advertisementCount,
+          beaconCount: _discovered.length,
+          nearestRssi: _nearestRssi(),
+        );
+        return;
+      }
+      if (!event.beacons.any(
+        (beacon) => beacon.identityKey == packet.identityKey,
+      )) {
+        _scanService.status.markAdvertisement(
+          advertisementCount: _scanService.advertisementCount,
+          beaconCount: _discovered.length,
+          nearestRssi: _nearestRssi(),
+        );
         return;
       }
       final now = DateTime.now().toUtc();
@@ -102,22 +115,22 @@ class CheckinController extends ChangeNotifier {
               deviceId: result.device?.address,
               deviceAddressType: result.device?.type?.toString(),
               txPower: result.txPower,
-              rawManufacturerData:
-                  result.scanRecord?.manufacturerSpecificData?[IBeaconParser.appleCompanyId],
+              rawManufacturerData: result
+                  .scanRecord
+                  ?.manufacturerSpecificData?[IBeaconParser.appleCompanyId],
               rawBytes: result.scanRecord?.bytes,
-              serviceUuids:
-                  result.scanRecord?.serviceUuids?.whereType<String>().toList(),
+              serviceUuids: result.scanRecord?.serviceUuids
+                  ?.whereType<String>()
+                  .toList(),
               connectable: result.connectable,
               samples: result.rssi == null ? const [] : [result.rssi!],
             )
           : existing.merge(result);
       _discovered[packet.identityKey] = beacon;
-      final nearest = _discovered.values
-          .map((item) => item.medianRssi)
-          .fold<int?>(null, (best, value) => best == null || value > best ? value : best);
       _scanService.status.markAdvertisement(
+        advertisementCount: _scanService.advertisementCount,
         beaconCount: _discovered.length,
-        nearestRssi: nearest,
+        nearestRssi: _nearestRssi(),
       );
       _publish();
     });
@@ -182,6 +195,13 @@ class CheckinController extends ChangeNotifier {
     notifyListeners();
   }
 
+  int? _nearestRssi() => _discovered.values
+      .map((item) => item.medianRssi)
+      .fold<int?>(
+        null,
+        (best, value) => best == null || value > best ? value : best,
+      );
+
   Future<QueuedCheckin> record() async {
     final all = {..._discovered, ..._simulated};
     final readings = <CheckinReadingInput>[];
@@ -191,12 +211,14 @@ class CheckinController extends ChangeNotifier {
       final samples = discovered.samples.isEmpty
           ? [discovered.medianRssi]
           : discovered.samples;
-      readings.add(CheckinReadingInput(
-        identityKey: beacon.identityKey,
-        rssiSamples: samples,
-        txPower: discovered.measuredPower,
-        platformDeviceId: discovered.deviceId,
-      ));
+      readings.add(
+        CheckinReadingInput(
+          identityKey: beacon.identityKey,
+          rssiSamples: samples,
+          txPower: discovered.measuredPower,
+          platformDeviceId: discovered.deviceId,
+        ),
+      );
     }
     if (readings.isEmpty) {
       throw StateError('No event beacons found. Move closer and scan again.');

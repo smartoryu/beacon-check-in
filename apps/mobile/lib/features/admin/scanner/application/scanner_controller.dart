@@ -16,9 +16,9 @@ class ScannerController extends ChangeNotifier {
     required ApiClient api,
     BeaconScanService? scanService,
     GattReader? gattReader,
-  })  : _api = api,
-        _scanService = scanService ?? BeaconScanService(),
-        _gattReader = gattReader ?? GattReader();
+  }) : _api = api,
+       _scanService = scanService ?? BeaconScanService(),
+       _gattReader = gattReader ?? GattReader();
 
   final ApiClient _api;
   final BeaconScanService _scanService;
@@ -43,7 +43,14 @@ class ScannerController extends ChangeNotifier {
     await _scanService.init();
     _subscription ??= _scanService.results.listen((result) {
       final packet = IBeaconParser.parseScanResult(result);
-      if (packet == null) return;
+      if (packet == null) {
+        _scanService.status.markAdvertisement(
+          advertisementCount: _scanService.advertisementCount,
+          beaconCount: _discovered.length,
+          nearestRssi: _nearestRssi(),
+        );
+        return;
+      }
       final now = DateTime.now().toUtc();
       final existing = _discovered[packet.identityKey];
       final beacon = existing == null
@@ -56,22 +63,22 @@ class ScannerController extends ChangeNotifier {
               deviceId: result.device?.address,
               deviceAddressType: result.device?.type?.toString(),
               txPower: result.txPower,
-              rawManufacturerData:
-                  result.scanRecord?.manufacturerSpecificData?[IBeaconParser.appleCompanyId],
+              rawManufacturerData: result
+                  .scanRecord
+                  ?.manufacturerSpecificData?[IBeaconParser.appleCompanyId],
               rawBytes: result.scanRecord?.bytes,
-              serviceUuids:
-                  result.scanRecord?.serviceUuids?.whereType<String>().toList(),
+              serviceUuids: result.scanRecord?.serviceUuids
+                  ?.whereType<String>()
+                  .toList(),
               connectable: result.connectable,
               samples: result.rssi == null ? const [] : [result.rssi!],
             )
           : existing.merge(result);
       _discovered[packet.identityKey] = beacon;
-      final nearest = _discovered.values
-          .map((item) => item.medianRssi)
-          .fold<int?>(null, (best, value) => best == null || value > best ? value : best);
       _scanService.status.markAdvertisement(
+        advertisementCount: _scanService.advertisementCount,
         beaconCount: _discovered.length,
-        nearestRssi: nearest,
+        nearestRssi: _nearestRssi(),
       );
       _scheduleLookup();
       notifyListeners();
@@ -122,7 +129,9 @@ class ScannerController extends ChangeNotifier {
     required bool readGatt,
   }) async {
     Map<String, dynamic>? gattInfo;
-    if (readGatt && discovered.deviceId != null && discovered.deviceId!.isNotEmpty) {
+    if (readGatt &&
+        discovered.deviceId != null &&
+        discovered.deviceId!.isNotEmpty) {
       gattInfo = await _gattReader.read(discovered.deviceId!);
     }
     final beacon = await _api.registerBeacon(
@@ -146,6 +155,13 @@ class ScannerController extends ChangeNotifier {
     await _api.requestRestore(beaconId, reason);
     await _lookupNow();
   }
+
+  int? _nearestRssi() => _discovered.values
+      .map((item) => item.medianRssi)
+      .fold<int?>(
+        null,
+        (best, value) => best == null || value > best ? value : best,
+      );
 
   void simulateUnregistered() {
     final now = DateTime.now().toUtc();

@@ -25,17 +25,25 @@ class BleStatusBanner extends StatelessWidget {
         final (color, icon) = switch (value.phase) {
           BlePhase.scanning => (Colors.blue, Icons.bluetooth_searching),
           BlePhase.ready || BlePhase.idle => (Colors.green, Icons.bluetooth),
-          BlePhase.bluetoothOff => (Colors.amber.shade800, Icons.bluetooth_disabled),
+          BlePhase.bluetoothOff => (
+            Colors.amber.shade800,
+            Icons.bluetooth_disabled,
+          ),
+          BlePhase.locationDisabled => (
+            Colors.amber.shade800,
+            Icons.location_off,
+          ),
           BlePhase.permissionDenied ||
-          BlePhase.permanentlyDenied =>
-            (Colors.red, Icons.lock_outline),
+          BlePhase.permanentlyDenied => (Colors.red, Icons.lock_outline),
           BlePhase.unsupported => (Colors.red, Icons.bluetooth_disabled),
           BlePhase.error => (Colors.red, Icons.error_outline),
         };
 
         final telemetry = value.lastAdvertisementAt == null
             ? null
-            : '${value.beaconCount} beacon(s) · nearest ${value.nearestRssi ?? '—'} dBm';
+            : '${value.advertisementCount} advertisement(s) · '
+                  '${value.beaconCount} iBeacon(s) · '
+                  'nearest ${value.nearestRssi ?? '—'} dBm';
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -56,7 +64,10 @@ class BleStatusBanner extends StatelessWidget {
                   children: [
                     Text(
                       value.message,
-                      style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     if (telemetry != null)
                       Text(
