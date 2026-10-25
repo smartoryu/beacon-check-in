@@ -32,9 +32,22 @@ class ScannerController extends ChangeNotifier {
 
   BeaconScanService get scanService => _scanService;
   List<DiscoveredBeacon> get discovered {
-    final items = _discovered.values.toList()
-      ..sort((a, b) => b.medianRssi.compareTo(a.medianRssi));
+    final items = _discovered.values.toList();
+    items.sort((a, b) {
+      final aRegistered = _isRegistered(a.identityKey);
+      final bRegistered = _isRegistered(b.identityKey);
+      if (aRegistered != bRegistered) {
+        // New/unknown devices stay at the top; known devices sink to the bottom.
+        return aRegistered ? 1 : -1;
+      }
+      return b.medianRssi.compareTo(a.medianRssi);
+    });
     return items;
+  }
+
+  bool _isRegistered(String identityKey) {
+    final status = _lookup[identityKey]?.status;
+    return status == 'registered' || status == 'deleted';
   }
 
   BeaconLookupItem? statusFor(String identityKey) => _lookup[identityKey];

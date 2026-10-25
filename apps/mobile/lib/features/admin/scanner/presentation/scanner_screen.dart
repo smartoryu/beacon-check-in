@@ -103,13 +103,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 children: [
                   Text(
                     'Register beacon',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
+                    style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
-                  Text(beacon.identityKey, style: const TextStyle(fontFamily: 'monospace')),
+                  Text(
+                    beacon.identityKey,
+                    style: const TextStyle(fontFamily: 'monospace'),
+                  ),
                   const SizedBox(height: 12),
                   if (error != null) ...[
                     Card(
@@ -152,13 +153,18 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           const JsonEncoder.withIndent('  ')
                               .convert(beacon.toMetadataJson()),
-                          style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                          ),
                         ),
                       ),
                     ],
@@ -215,14 +221,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       await _controller.requestRestore(beacon.id, reasonController.text.trim());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Restore request submitted for approval.')),
+          const SnackBar(
+            content: Text('Restore request submitted for approval.'),
+          ),
         );
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -254,9 +261,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               Expanded(
                 child: Text(
                   '${beacons.length} iBeacon(s) in range',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
+                  style: Theme.of(context).textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -265,7 +270,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     ? _controller.stop
                     : _controller.start,
                 icon: Icon(
-                  _controller.scanService.isScanning ? Icons.stop : Icons.play_arrow,
+                  _controller.scanService.isScanning
+                      ? Icons.stop
+                      : Icons.play_arrow,
                 ),
                 label: Text(
                   _controller.scanService.isScanning ? 'Stop' : 'Scan',
@@ -316,7 +323,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            beacon.localName ?? beacon.identityKey,
+                            registered?.label ??
+                                beacon.localName ??
+                                beacon.identityKey,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -324,17 +333,17 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
+                    if (beacon.localName != null &&
+                        beacon.localName != registered?.label) ...[
+                      Text(
+                        'Local name: ${beacon.localName}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                     Text(
                       '${beacon.identityKey}\nRSSI ${beacon.medianRssi} dBm · best ${beacon.samples.isEmpty ? beacon.rssi : beacon.samples.reduce((a, b) => a > b ? a : b)} dBm · ${beacon.samples.length} sample(s)',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    if (registered != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Registered as “${registered.label}”',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,

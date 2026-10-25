@@ -573,6 +573,8 @@ Bottom navigation: **Scanner**, **Profile**.
 - Shows a real-time Bluetooth status banner: adapter, permission, scanning and telemetry state.
 - Displays discovered beacons with identity, label, RSSI and registration status.
 - Each beacon is marked **New**, **Registered** or **Deleted**.
+- New/unregistered devices stay at the top; registered and deleted devices are pushed to the bottom.
+- For a registered beacon, the card title uses the **registered label**, not the Bluetooth advertised name (for example `nRF5x`). The advertised local name is shown separately when it differs.
 - For a new beacon:
   - enter a **Label**;
   - optionally enable **Read GATT details** to read Device Information (`0x180A`) and battery (`0x180F`);

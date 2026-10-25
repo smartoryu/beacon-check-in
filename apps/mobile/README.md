@@ -46,6 +46,8 @@ firebase appdistribution:testers:add --group-alias testers you@example.com \
 
 Android requires both **Nearby devices** and **Location** permission, and Location services must be turned on. The app uses RSSI for position estimation, so the manifest must not use `usesPermissionFlags="neverForLocation"` — Android can filter iBeacon advertisements when that flag is present.
 
+Registered beacons are sorted below new/unregistered devices, and their card title uses the registered label rather than the Bluetooth advertised name.
+
 The scanner banner shows:
 
 ```text
