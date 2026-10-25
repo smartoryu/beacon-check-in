@@ -71,7 +71,7 @@ func (s *AdminService) CreateAdmin(ctx context.Context, name, email string) (*us
 		return nil, "", err
 	}
 
-	tempPassword, err := apputils.GeneratePassphrase(4)
+	tempPassword, err := apputils.GenerateTemporaryPassword()
 	if err != nil {
 		return nil, "", err
 	}
@@ -161,7 +161,7 @@ func (s *AdminService) ResetPassword(ctx context.Context, id, actorID uuid.UUID)
 	if err != nil {
 		return "", err
 	}
-	tempPassword, err := apputils.GeneratePassphrase(4)
+	tempPassword, err := apputils.GenerateTemporaryPassword()
 	if err != nil {
 		return "", err
 	}

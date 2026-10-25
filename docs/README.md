@@ -281,13 +281,13 @@ Use the seeded account or the production super admin credentials. After signing 
 - A normal account goes to the **Dashboard**.
 - The theme toggle is available in the sidebar (desktop), mobile header, login page and change-password page.
 
-Temporary admin passwords are now easy-to-read phrases, for example:
+Temporary admin passwords are short, easy-to-read phrases, for example:
 
 ```text
-cobalt-lunar-pepper-tiger-42
+cobalt-42
 ```
 
-They are one-time credentials and must be changed at first sign-in.
+They contain one word plus a two-digit number and are at most 10 characters long. They are one-time credentials and must be changed at first sign-in.
 
 ### Dashboard
 

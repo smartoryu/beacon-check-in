@@ -4,13 +4,11 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
-	"strings"
 )
 
 // passphraseWords is a deliberately small, easy-to-type word list for one-time
-// admin passwords. Four words plus two digits keeps the phrase readable while
-// still giving enough entropy for a short-lived credential that must be changed
-// on first sign-in.
+// admin passwords. Temporary passwords use one word plus a two-digit number so
+// they stay at or below 10 characters.
 var passphraseWords = []string{
 	"amber", "anchor", "apple", "april", "arrow", "atlas", "autumn", "bamboo",
 	"beacon", "berry", "birch", "bison", "bloom", "blue", "bolt", "breeze",
@@ -33,34 +31,28 @@ var passphraseWords = []string{
 	"wind", "winter", "wolf", "zephyr",
 }
 
-// GeneratePassphrase returns a human-readable phrase like
-// "cobalt-lunar-pepper-tiger-42". The words are unique within one phrase and
-// the suffix is a zero-padded 0–99 number.
-func GeneratePassphrase(wordCount int) (string, error) {
-	if wordCount < 3 || wordCount > 6 {
-		return "", fmt.Errorf("passphrase word count must be between 3 and 6")
+// GenerateTemporaryPassword returns a short, readable one-time password such as
+// "cobalt-42". The word is 5–7 characters and the suffix is a zero-padded
+// 0–99 number, so the result is always 8–10 characters long.
+func GenerateTemporaryPassword() (string, error) {
+	// Keep the hyphen plus the two-digit number inside the 10-character limit.
+	candidates := make([]string, 0, len(passphraseWords))
+	for _, word := range passphraseWords {
+		if len(word) >= 5 && len(word) <= 7 {
+			candidates = append(candidates, word)
+		}
 	}
 
-	used := make(map[int]struct{}, wordCount)
-	words := make([]string, 0, wordCount)
-	for len(words) < wordCount {
-		index, err := randomInt(len(passphraseWords))
-		if err != nil {
-			return "", err
-		}
-		if _, exists := used[index]; exists {
-			continue
-		}
-		used[index] = struct{}{}
-		words = append(words, passphraseWords[index])
+	index, err := randomInt(len(candidates))
+	if err != nil {
+		return "", err
 	}
-
 	number, err := randomInt(100)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s-%02d", strings.Join(words, "-"), number), nil
+	return fmt.Sprintf("%s-%02d", candidates[index], number), nil
 }
 
 func randomInt(limit int) (int, error) {

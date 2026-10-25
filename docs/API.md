@@ -326,11 +326,11 @@ Create an admin with a one-time temporary password.
     "role": "admin",
     "must_change_password": true
   },
-  "temporary_password": "cobalt-lunar-pepper-tiger-42"
+  "temporary_password": "cobalt-42"
 }
 ```
 
-The temporary password is a phrase: **4 unique words + a 2-digit number**. It is shown once. The admin must change it on first sign-in.
+The temporary password is **one word + a two-digit number** and is at most 10 characters long, for example `cobalt-42`. It is shown once. The admin must change it on first sign-in.
 
 **Errors**
 
@@ -374,7 +374,7 @@ Generate a new temporary phrase, replace the stored password hash, revoke the ad
 
 ```json
 {
-  "temporary_password": "opal-feather-ocean-fern-97"
+  "temporary_password": "opal-97"
 }
 ```
 
