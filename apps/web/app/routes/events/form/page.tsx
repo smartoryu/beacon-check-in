@@ -148,13 +148,6 @@ function EventForm({
 		});
 	}
 
-	function updatePlacement(id: string, patchValue: Partial<Placement>) {
-		setPlacements((current) => ({
-			...current,
-			[id]: { ...current[id], ...patchValue },
-		}));
-	}
-
 	async function submit(event_: FormEvent) {
 		event_.preventDefault();
 		setError(null);
@@ -287,7 +280,10 @@ function EventForm({
 								onChange={(e) => setFloorHeight(e.target.value)}
 							/>
 						</Field>
-						<Field label="RSSI threshold (dBm)">
+						<Field
+							label="RSSI threshold (dBm)"
+							hint="Minimum signal strength a beacon must reach to count. -75 is a good starting point; higher values (closer to 0) require the phone to be nearer."
+						>
 							<Input
 								type="number"
 								min="-120"
@@ -316,7 +312,10 @@ function EventForm({
 								onChange={(e) => setCoverageRadius(e.target.value)}
 							/>
 						</Field>
-						<Field label="Path-loss exponent">
+						<Field
+							label="Path-loss exponent"
+							hint="How quickly signal strength fades with distance. 2 is open space; 2.5–3.5 suits indoor areas with walls and furniture. This affects position estimates, not the RSSI pass/fail check."
+						>
 							<Input
 								type="number"
 								min="0.1"
@@ -344,56 +343,39 @@ function EventForm({
 							</p>
 						) : (
 							<div className="space-y-2">
+								<p className="text-gray-500 text-xs">
+									Click anywhere on a beacon card to attach or remove it. Positions are assigned
+									automatically; fine-tune them on the event detail page.
+								</p>
 								{beacons.map((beacon) => {
 									const selected = Boolean(placements[beacon.id]);
 									return (
-										<div
+										<label
 											key={beacon.id}
-											className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-800"
+											className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 transition-colors ${
+												selected
+													? "border-blue-300 bg-blue-50"
+													: "border-gray-200 hover:bg-gray-50"
+											}`}
 										>
 											<input
 												type="checkbox"
 												checked={selected}
 												onChange={() => toggleBeacon(beacon)}
-												className="h-4 w-4 rounded border-gray-300 text-blue-600"
+												className="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600"
 											/>
-											<div className="min-w-40 flex-1">
-												<div className="font-medium text-gray-900 text-sm dark:text-white">
-													{beacon.label}
-												</div>
-												<div className="font-mono text-gray-500 text-xs dark:text-gray-400">
+											<div className="min-w-0 flex-1">
+												<div className="font-medium text-gray-900 text-sm">{beacon.label}</div>
+												<div className="font-mono text-gray-500 text-xs">
 													{beacon.identity_key}
 												</div>
 											</div>
 											{selected ? (
-												<div className="flex items-center gap-2">
-													<label className="text-gray-500 text-xs dark:text-gray-400">x</label>
-													<Input
-														type="number"
-														min="0"
-														max={Number(floorWidth) || 20}
-														step="0.5"
-														className="h-8 w-20"
-														value={placements[beacon.id].x}
-														onChange={(e) =>
-															updatePlacement(beacon.id, { x: Number(e.target.value) })
-														}
-													/>
-													<label className="text-gray-500 text-xs dark:text-gray-400">y</label>
-													<Input
-														type="number"
-														min="0"
-														max={Number(floorHeight) || 20}
-														step="0.5"
-														className="h-8 w-20"
-														value={placements[beacon.id].y}
-														onChange={(e) =>
-															updatePlacement(beacon.id, { y: Number(e.target.value) })
-														}
-													/>
-												</div>
+												<span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700 text-xs">
+													Selected
+												</span>
 											) : null}
-										</div>
+										</label>
 									);
 								})}
 							</div>

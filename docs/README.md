@@ -489,11 +489,10 @@ A point at (35, 15) is 15 m from the centre → rejected as outside_coverage.
 
 The form lists all **active** registered beacons.
 
-- Tick a beacon to attach it to the event.
+- Click anywhere on a beacon card to attach or remove it; the whole card is the toggle.
 - At least one beacon is required.
-- When selected, set its `x` and `y` coordinates in metres.
-- The coordinates must stay inside the floor width/height.
-- The event detail page can fine-tune positions by dragging.
+- Attaching a beacon assigns an automatic default `x`/`y` position inside the floor grid.
+- The event detail page can fine-tune positions by dragging; the create/edit form no longer asks for raw coordinates.
 - The same beacon cannot be attached twice.
 
 **Per-beacon TX power override (`tx_power_override`)**
