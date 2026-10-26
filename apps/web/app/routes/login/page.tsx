@@ -1,6 +1,5 @@
 import { Form, redirect, useActionData, useNavigation } from "react-router";
 import { Button, ErrorAlert, Input } from "#/components/ui";
-import { ThemeToggle } from "#/components/theme-toggle";
 import { api, ApiError } from "#/lib/api";
 import { setAuth } from "#/lib/auth";
 
@@ -36,10 +35,7 @@ export default function LoginPage() {
 	const pending = navigation.state === "submitting";
 
 	return (
-		<div className="relative flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">
-			<div className="absolute top-4 right-4">
-				<ThemeToggle />
-			</div>
+		<div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">
 			<div className="w-full max-w-md space-y-6">
 				<div className="text-center">
 					<div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 font-bold text-2xl text-white">

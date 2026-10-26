@@ -1,6 +1,5 @@
 import { Form, Navigate, redirect, useActionData, useNavigation } from "react-router";
 import { Button, ErrorAlert, Input } from "#/components/ui";
-import { ThemeToggle } from "#/components/theme-toggle";
 import { api, ApiError } from "#/lib/api";
 import { clearAuth, getAccessToken } from "#/lib/auth";
 
@@ -40,10 +39,7 @@ export default function ChangePasswordPage() {
 	}
 
 	return (
-		<div className="relative flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">
-			<div className="absolute top-4 right-4">
-				<ThemeToggle />
-			</div>
+		<div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">
 			<div className="w-full max-w-md space-y-6">
 				<div className="text-center">
 					<h1 className="font-bold text-3xl text-gray-900 dark:text-white">

@@ -25,8 +25,7 @@ class _BeaconCheckInAppState extends ConsumerState<BeaconCheckInApp> {
       title: 'Beacon Check-In',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       routerConfig: ref.watch(appRouterProvider),
     );
   }

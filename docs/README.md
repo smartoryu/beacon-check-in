@@ -271,7 +271,7 @@ The web app lives at:
 - Local: `http://localhost:3000`
 - Production: `https://admin-beacon-check-in.playground.my.id`
 
-It is a React Router SPA with Tailwind CSS, light/dark themes and a mobile-friendly layout.
+It is a React Router SPA with Tailwind CSS, a light-only theme and a mobile-friendly layout.
 
 ### Sign in
 
@@ -279,7 +279,7 @@ Use the seeded account or the production super admin credentials. After signing 
 
 - A temporary-password account is redirected to **Change password**.
 - A normal account goes to the **Dashboard**.
-- The theme toggle is available in the sidebar (desktop), mobile header, login page and change-password page.
+- The web app always uses the light theme; there is no dark-mode toggle.
 
 Temporary admin passwords are short, easy-to-read phrases, for example:
 
@@ -847,9 +847,9 @@ The complete infrastructure runbook is in [`infra/README.md`](../infra/README.md
 
 This was caused by an older API version that tried to insert a second password row. The current API upserts the password. Make sure the production API is on the latest release. If it still happens, check the API logs for the underlying database error.
 
-### “Dark mode is hard to read”
+### “Dark mode”
 
-Use the sun/moon toggle in the sidebar, mobile header, login page or change-password page. The choice is stored in the browser and the app follows the OS theme by default.
+Dark mode is disabled on the web and mobile apps. Both always use the light theme.
 
 ### “The web app cannot reach the API”
 

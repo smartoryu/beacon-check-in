@@ -8,7 +8,6 @@ import {
 	ShieldCheck,
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router";
-import { ThemeToggle } from "#/components/theme-toggle";
 import { clearAuth } from "#/lib/auth";
 import type { User } from "#/lib/types";
 import { Badge, Button, Skeleton, cn } from "./ui";
@@ -114,12 +113,9 @@ export function AppShell({
 								{roleLabel(me.role)}
 							</Badge>
 						</div>
-						<div className="flex gap-2">
-							<ThemeToggle className="shrink-0" />
-							<Button variant="secondary" size="sm" className="flex-1" onClick={logout}>
-								<LogOut className="h-4 w-4" /> Sign out
-							</Button>
-						</div>
+						<Button variant="secondary" size="sm" className="w-full" onClick={logout}>
+							<LogOut className="h-4 w-4" /> Sign out
+						</Button>
 					</div>
 				</div>
 			</aside>
@@ -135,7 +131,6 @@ export function AppShell({
 						</span>
 					</Link>
 					<div className="flex items-center gap-1.5">
-						<ThemeToggle />
 						<span className="hidden sm:inline-flex">
 							<Badge variant={isSuper ? "purple" : "blue"}>{roleLabel(me.role)}</Badge>
 						</span>

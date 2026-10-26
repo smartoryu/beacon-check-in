@@ -1,5 +1,4 @@
 import "./styles/global.css";
-import { useEffect } from "react";
 import {
 	isRouteErrorResponse,
 	Links,
@@ -10,7 +9,6 @@ import {
 } from "react-router";
 import NotFound from "#/components/errors/404";
 import InternalError from "#/components/errors/500";
-import { initTheme } from "#/lib/theme";
 import type { Route } from "./+types/root";
 
 export const links: Route.LinksFunction = () => [
@@ -21,11 +19,9 @@ export const links: Route.LinksFunction = () => [
 	},
 ];
 
-const themeBootstrap = `(function(){try{var t=localStorage.getItem("beacon-check-in.theme")||"system";var d=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.classList.toggle("dark",d);r.dataset.theme=d?"dark":"light";r.style.colorScheme=d?"dark":"light";}catch(e){}})();`;
+const lightThemeBootstrap = `(function(){try{var r=document.documentElement;r.classList.remove("dark");r.dataset.theme="light";r.style.colorScheme="light";localStorage.removeItem("beacon-check-in.theme");}catch(e){}})();`;
 
 export function Layout({ children }: { children: React.ReactNode }) {
-	useEffect(() => initTheme(), []);
-
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
@@ -33,7 +29,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<Meta />
 				<Links />
-				<script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+				<script dangerouslySetInnerHTML={{ __html: lightThemeBootstrap }} />
 			</head>
 			<body suppressHydrationWarning={true}>
 				{children}
