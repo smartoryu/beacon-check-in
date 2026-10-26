@@ -14,9 +14,13 @@ WORKDIR /repo
 ARG VITE_API_BASE_URL=https://beacon-check-in-api.playground.my.id/api/v1
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV CI=true
+# pnpm 11 may auto-run `pnpm install` before a workspace script when it
+# thinks node_modules is out of date. The root prepare script needs `moon`,
+# which is intentionally not installed in this lean builder image.
+ENV npm_config_verify_deps_before_run=false
 
 # Install only the workspace metadata first for a cacheable dependency layer.
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/web/package.json apps/web/package.json
 COPY packages/shared-ui/package.json packages/shared-ui/package.json
 RUN pnpm install --frozen-lockfile --ignore-scripts
