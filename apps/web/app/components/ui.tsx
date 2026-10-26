@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
 
@@ -41,6 +41,30 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 	),
 );
 Button.displayName = "Button";
+
+export function RefreshButton({
+	onClick,
+	loading = false,
+	className,
+}: {
+	onClick: () => void;
+	loading?: boolean;
+	className?: string;
+}) {
+	return (
+		<Button
+			variant="secondary"
+			size="sm"
+			onClick={onClick}
+			disabled={loading}
+			className={className}
+			aria-label="Refresh data"
+		>
+			<RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+			{loading ? "Refreshing…" : "Refresh"}
+		</Button>
+	);
+}
 
 export function ButtonLink({
 	to,

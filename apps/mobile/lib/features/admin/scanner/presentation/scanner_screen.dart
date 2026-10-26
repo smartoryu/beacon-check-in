@@ -101,6 +101,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
   }
 
+  Future<void> _refreshScanner() async {
+    await _controller.refreshLookup();
+    if (!_controller.scanService.isScanning) {
+      await _controller.start();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final beacons = _controller.discovered;
@@ -109,132 +116,142 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       selectedIndex: 0,
       actions: [
         IconButton(
-          onPressed: _controller.refreshLookup,
+          onPressed: _refreshScanner,
           icon: const Icon(Icons.refresh),
-          tooltip: 'Refresh registration status',
+          tooltip: 'Refresh scanner',
         ),
       ],
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          BleStatusBanner(
-            status: _controller.scanService.status,
-            onEnableBluetooth: () => _controller.scanService.enableBluetooth(),
-            onRetry: _controller.start,
-            onStartScan: _controller.start,
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${beacons.length} iBeacon(s) in range',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ),
-              TextButton.icon(
-                onPressed: _controller.scanService.isScanning
-                    ? _controller.stop
-                    : _controller.start,
-                icon: Icon(
-                  _controller.scanService.isScanning
-                      ? Icons.stop
-                      : Icons.play_arrow,
-                ),
-                label: Text(
-                  _controller.scanService.isScanning ? 'Stop' : 'Scan',
-                ),
-              ),
-            ],
-          ),
-          if (AppConfig.enableDebugScanner)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: OutlinedButton.icon(
-                onPressed: _controller.simulateUnregistered,
-                icon: const Icon(Icons.science_outlined),
-                label: const Text('Add simulated beacon (debug)'),
-              ),
+      body: RefreshIndicator(
+        onRefresh: _refreshScanner,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          children: [
+            BleStatusBanner(
+              status: _controller.scanService.status,
+              onEnableBluetooth: () =>
+                  _controller.scanService.enableBluetooth(),
+              onRetry: _controller.start,
+              onStartScan: _controller.start,
             ),
-          if (beacons.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Column(
-                children: [
-                  Icon(Icons.bluetooth_searching, size: 48),
-                  SizedBox(height: 12),
-                  Text(
-                    'No iBeacons found yet',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${beacons.length} iBeacon(s) in range',
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Move closer to a beacon and keep the scanner open.',
-                    textAlign: TextAlign.center,
+                ),
+                TextButton.icon(
+                  onPressed: _controller.scanService.isScanning
+                      ? _controller.stop
+                      : _controller.start,
+                  icon: Icon(
+                    _controller.scanService.isScanning
+                        ? Icons.stop
+                        : Icons.play_arrow,
                   ),
-                ],
-              ),
+                  label: Text(
+                    _controller.scanService.isScanning ? 'Stop' : 'Scan',
+                  ),
+                ),
+              ],
             ),
-          ...beacons.map((beacon) {
-            final lookup = _controller.statusFor(beacon.identityKey);
-            final status = lookup?.status ?? 'unknown';
-            final registered = lookup?.beacon;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+            if (AppConfig.enableDebugScanner)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: OutlinedButton.icon(
+                  onPressed: _controller.simulateUnregistered,
+                  icon: const Icon(Icons.science_outlined),
+                  label: const Text('Add simulated beacon (debug)'),
+                ),
+              ),
+            if (beacons.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 48),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            registered?.label ??
-                                beacon.localName ??
-                                beacon.identityKey,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        _StatusBadge(status: status),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    if (beacon.localName != null &&
-                        beacon.localName != registered?.label) ...[
-                      Text(
-                        'Local name: ${beacon.localName}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
+                    Icon(Icons.bluetooth_searching, size: 48),
+                    SizedBox(height: 12),
                     Text(
-                      '${beacon.identityKey}\nRSSI ${beacon.medianRssi} dBm · best ${beacon.samples.isEmpty ? beacon.rssi : beacon.samples.reduce((a, b) => a > b ? a : b)} dBm · ${beacon.samples.length} sample(s)',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      'No iBeacons found yet',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (status == 'unknown')
-                          FilledButton(
-                            onPressed: () => _openRegister(beacon),
-                            child: const Text('Register'),
-                          ),
-                        if (status == 'registered')
-                          const Chip(label: Text('Already registered')),
-                        if (status == 'deleted' && registered != null)
-                          FilledButton.tonal(
-                            onPressed: () => _requestRestore(registered),
-                            child: const Text('Request restore'),
-                          ),
-                      ],
+                    SizedBox(height: 6),
+                    Text(
+                      'Move closer to a beacon and keep the scanner open.',
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
-            );
-          }),
-        ],
+            ...beacons.map((beacon) {
+              final lookup = _controller.statusFor(beacon.identityKey);
+              final status = lookup?.status ?? 'unknown';
+              final registered = lookup?.beacon;
+              return Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              registered?.label ??
+                                  beacon.localName ??
+                                  beacon.identityKey,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          _StatusBadge(status: status),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      if (beacon.localName != null &&
+                          beacon.localName != registered?.label) ...[
+                        Text(
+                          'Local name: ${beacon.localName}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                      Text(
+                        '${beacon.identityKey}\nRSSI ${beacon.medianRssi} dBm · best ${beacon.samples.isEmpty ? beacon.rssi : beacon.samples.reduce((a, b) => a > b ? a : b)} dBm · ${beacon.samples.length} sample(s)',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (status == 'unknown')
+                            FilledButton(
+                              onPressed: () => _openRegister(beacon),
+                              child: const Text('Register'),
+                            ),
+                          if (status == 'registered')
+                            const Chip(label: Text('Already registered')),
+                          if (status == 'deleted' && registered != null)
+                            FilledButton.tonal(
+                              onPressed: () => _requestRestore(registered),
+                              child: const Text('Request restore'),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

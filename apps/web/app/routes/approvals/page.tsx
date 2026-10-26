@@ -11,6 +11,7 @@ import {
 	Modal,
 	PageHeader,
 	PageSkeleton,
+	RefreshButton,
 	Textarea,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
@@ -79,6 +80,7 @@ export default function ApprovalsPage() {
 			<PageHeader
 				title="Approvals"
 				description="Admins cannot delete or restore beacons directly. Approve or reject their requests here."
+				actions={<RefreshButton onClick={refresh} />}
 			/>
 
 			<Card>

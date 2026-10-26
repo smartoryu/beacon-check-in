@@ -106,6 +106,8 @@ or:
 }
 ```
 
+API responses include `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` and `Pragma: no-cache` so browsers, proxies and mobile clients do not reuse stale operational data.
+
 Common status codes:
 
 | Status | Meaning |

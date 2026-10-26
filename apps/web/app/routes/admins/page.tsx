@@ -12,6 +12,7 @@ import {
 	Modal,
 	PageHeader,
 	PageSkeleton,
+	RefreshButton,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
 import { useAuthUser } from "#/lib/auth-context";
@@ -125,7 +126,12 @@ export default function AdminsPage() {
 			<PageHeader
 				title="Admins"
 				description="Create and manage admin accounts. Only the super admin can use this page."
-				actions={<Button onClick={openCreate}>Create admin</Button>}
+				actions={
+					<>
+						<RefreshButton onClick={refresh} />
+						<Button onClick={openCreate}>Create admin</Button>
+					</>
+				}
 			/>
 
 			<Card>

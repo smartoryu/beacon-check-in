@@ -8,6 +8,7 @@ import {
 	ErrorAlert,
 	PageHeader,
 	PageSkeleton,
+	RefreshButton,
 	StatCard,
 } from "#/components/ui";
 import { api } from "#/lib/api";
@@ -54,6 +55,7 @@ export default function DashboardPage() {
 			<PageHeader
 				title="Dashboard"
 				description="A quick view of users, events, beacons and check-in activity."
+				actions={<RefreshButton onClick={refresh} />}
 			/>
 
 			<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

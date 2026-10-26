@@ -12,6 +12,7 @@ import {
 	Modal,
 	PageHeader,
 	PageSkeleton,
+	RefreshButton,
 	Select,
 	Textarea,
 } from "#/components/ui";
@@ -163,6 +164,7 @@ export default function BeaconsPage() {
 			<PageHeader
 				title="Beacons"
 				description="Beacons are registered from the mobile app. Here you can rename them, inspect metadata and request deletion."
+				actions={<RefreshButton onClick={refresh} />}
 			/>
 
 			{message ? (

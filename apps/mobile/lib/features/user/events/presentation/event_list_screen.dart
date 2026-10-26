@@ -21,7 +21,8 @@ class EventListScreen extends ConsumerWidget {
       selectedIndex: 0,
       actions: [
         IconButton(
-          onPressed: () => ref.read(eventsControllerProvider.notifier).refresh(),
+          onPressed: () =>
+              ref.read(eventsControllerProvider.notifier).refresh(),
           icon: const Icon(Icons.refresh),
           tooltip: 'Refresh',
         ),
@@ -31,6 +32,7 @@ class EventListScreen extends ConsumerWidget {
         child: events.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
               Card(
@@ -45,6 +47,7 @@ class EventListScreen extends ConsumerWidget {
           data: (items) {
             if (items.isEmpty) {
               return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: const [
                   SizedBox(height: 120),
@@ -64,9 +67,15 @@ class EventListScreen extends ConsumerWidget {
               );
             }
             final now = DateTime.now().toUtc();
-            final ongoing = items.where((event) => !event.isUpcoming && now.isBefore(event.endsAt.toUtc())).toList();
+            final ongoing = items
+                .where(
+                  (event) =>
+                      !event.isUpcoming && now.isBefore(event.endsAt.toUtc()),
+                )
+                .toList();
             final upcoming = items.where((event) => event.isUpcoming).toList();
             return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
                 if (worker.online.value == false)
@@ -78,7 +87,9 @@ class EventListScreen extends ConsumerWidget {
                         children: [
                           Icon(Icons.cloud_off, size: 18),
                           SizedBox(width: 8),
-                          Expanded(child: Text('Offline — showing cached events.')),
+                          Expanded(
+                            child: Text('Offline — showing cached events.'),
+                          ),
                         ],
                       ),
                     ),
@@ -111,9 +122,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
+        style: Theme.of(context).textTheme.titleMedium
             ?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
@@ -142,7 +151,10 @@ class _EventCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       event.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                   Chip(

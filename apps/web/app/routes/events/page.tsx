@@ -10,6 +10,7 @@ import {
 	ErrorAlert,
 	Input,
 	PageHeader,
+	RefreshButton,
 	Skeleton,
 	Select,
 } from "#/components/ui";
@@ -80,9 +81,7 @@ export default function EventsPage() {
 				description="Create events, attach at least one beacon and place beacons on the floor grid."
 				actions={
 					<>
-						<Button variant="secondary" onClick={refresh}>
-							Refresh
-						</Button>
+						<RefreshButton onClick={refresh} loading={loading} />
 						<ButtonLink to="/events/new">Create event</ButtonLink>
 					</>
 				}

@@ -31,8 +31,10 @@ func (s *HTTPServer) registerModules(cfg *config.Config, pg *adapter.PostgresDB,
 	))
 	e.Use(middleware.CompressionMiddleware())
 
-	// Create API v1 route group
+	// Create API v1 route group. API data is live operational data, so never
+	// let browsers, proxies or clients reuse a cached response.
 	apiV1Route := e.Group("/api/v1")
+	apiV1Route.Use(middleware.NoCacheMiddleware())
 
 	// Load user module (no auth middleware yet)
 	userModule := modUser.NewModule(&modUser.Options{PgPool: pg.Pool, Logger: s.logger})

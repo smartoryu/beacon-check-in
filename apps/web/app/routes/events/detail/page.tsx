@@ -14,6 +14,7 @@ import {
 	Modal,
 	DetailSkeleton,
 	PageHeader,
+	RefreshButton,
 	Spinner,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
@@ -131,6 +132,7 @@ function EventDetailBody({
 				description={`${event.place_name}${event.address ? ` · ${event.address}` : ""}`}
 				actions={
 					<>
+						<RefreshButton onClick={refresh} />
 						<ButtonLink to={`/events/${event.id}/edit`} variant="secondary">
 							Edit event
 						</ButtonLink>

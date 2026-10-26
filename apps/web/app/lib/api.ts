@@ -88,7 +88,11 @@ async function request<T>(
 
 	let response: Response;
 	try {
-		response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+		response = await fetch(`${BASE_URL}${path}`, {
+			...options,
+			headers,
+			cache: "no-store",
+		});
 	} catch (error) {
 		throw new ApiError(0, "Network error — check that the API is running", error);
 	}

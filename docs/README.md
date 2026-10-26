@@ -291,6 +291,8 @@ They contain one word plus a two-digit number and are at most 10 characters long
 
 ### Dashboard
 
+Every data page has a **Refresh** button that refetches the latest data without a browser hard reload. The web API client also sends `cache: no-store`, so refresh requests are not served from the browser HTTP cache.
+
 The dashboard gives a quick operational snapshot:
 
 - number of users by role;
@@ -603,6 +605,10 @@ Bottom navigation: **Scanner**, **Profile**.
 The app asks for the permissions required by the platform. If Bluetooth is off or permission is denied, the status banner explains what to do. On iOS, the beacon MAC address is hidden by the operating system; the identity is always UUID + major + minor.
 
 ### Offline queue and sync
+
+**Pull-to-refresh:** Events, Event detail, Check-in, History, Profile and Beacon Scanner support pull-to-refresh. The existing refresh/sync buttons on Events, History and Scanner also refetch the data shown on the screen.
+
+For an explicit refresh, the mobile app asks the API for fresh data. The local Hive event cache is only used as an offline fallback on initial load; it is not preferred over a successful refresh response.
 
 The sync worker is not a background OS job. It runs while the app is active and on these triggers:
 

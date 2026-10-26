@@ -25,15 +25,27 @@ class EventDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: event.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('Unable to load event: $error'),
+      body: RefreshIndicator(
+        onRefresh: () =>
+            ref.read(eventDetailProvider(eventId).notifier).refresh(),
+        child: event.when(
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 180),
+              Center(child: CircularProgressIndicator()),
+            ],
           ),
+          error: (error, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(24),
+            children: [
+              const SizedBox(height: 80),
+              Text('Unable to load event: $error', textAlign: TextAlign.center),
+            ],
+          ),
+          data: (item) => _Body(event: item),
         ),
-        data: (item) => _Body(event: item),
       ),
     );
   }
@@ -48,6 +60,7 @@ class _Body extends StatelessWidget {
     final formatter = DateFormat('EEEE, d MMMM yyyy · HH:mm');
     final ongoing = event.isOngoing;
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
         Row(
@@ -55,9 +68,7 @@ class _Body extends StatelessWidget {
             Expanded(
               child: Text(
                 event.title,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
+                style: Theme.of(context).textTheme.headlineSmall
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
@@ -94,7 +105,8 @@ class _Body extends StatelessWidget {
                   const SizedBox(height: 8),
                   _InfoRow(
                     icon: Icons.radar,
-                    text: 'Coverage radius ${event.coverageRadiusM!.toStringAsFixed(1)} m',
+                    text:
+                        'Coverage radius ${event.coverageRadiusM!.toStringAsFixed(1)} m',
                   ),
                 ],
               ],
@@ -106,7 +118,10 @@ class _Body extends StatelessWidget {
           Text(event.description!),
         ],
         const SizedBox(height: 16),
-        Text('Beacons in this event', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Beacons in this event',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         ...event.beacons.map(
           (beacon) => Card(
@@ -114,13 +129,17 @@ class _Body extends StatelessWidget {
               leading: const Icon(Icons.bluetooth),
               title: Text(beacon.label),
               subtitle: Text(beacon.identityKey),
-              trailing: Text('(${beacon.x.toStringAsFixed(1)}, ${beacon.y.toStringAsFixed(1)}) m'),
+              trailing: Text(
+                '(${beacon.x.toStringAsFixed(1)}, ${beacon.y.toStringAsFixed(1)}) m',
+              ),
             ),
           ),
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
-          onPressed: ongoing ? () => context.push('/events/${event.id}/checkin') : null,
+          onPressed: ongoing
+              ? () => context.push('/events/${event.id}/checkin')
+              : null,
           icon: const Icon(Icons.how_to_reg),
           label: Text(ongoing ? 'Check in' : 'Check-in opens during the event'),
         ),
