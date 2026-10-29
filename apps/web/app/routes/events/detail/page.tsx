@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { BeaconPlacementGrid } from "#/components/beacon-placement-grid";
 import { TriangulationGraph } from "#/components/triangulation-graph";
 import {
 	Badge,
@@ -15,7 +14,6 @@ import {
 	DetailSkeleton,
 	PageHeader,
 	RefreshButton,
-	Spinner,
 } from "#/components/ui";
 import { api, ApiError } from "#/lib/api";
 import { eventStatus, formatDateTime } from "#/lib/datetime";
@@ -69,16 +67,10 @@ function EventDetailBody({
 	refresh: () => void;
 }) {
 	const navigate = useNavigate();
-	const [placements, setPlacements] = useState(event.beacons);
-	const [savingLayout, setSavingLayout] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [tab, setTab] = useState<"accepted" | "rejected">("accepted");
 	const [selectedCheckinId, setSelectedCheckinId] = useState<string | null>(null);
 	const [deleteOpen, setDeleteOpen] = useState(false);
-
-	useEffect(() => {
-		setPlacements(event.beacons);
-	}, [event.beacons]);
 
 	const accepted = checkins.filter((item) => item.status === "accepted");
 	const rejected = checkins.filter((item) => item.status === "rejected");
@@ -86,34 +78,6 @@ function EventDetailBody({
 	const selectedCheckin =
 		accepted.find((item) => item.id === selectedCheckinId) ?? accepted[0] ?? null;
 	const state = eventStatus(event);
-
-	const hasLayoutChanges = useMemo(() => {
-		return placements.some((beacon) => {
-			const original = event.beacons.find((item) => item.beacon_id === beacon.beacon_id);
-			return !original || original.x !== beacon.x || original.y !== beacon.y;
-		});
-	}, [placements, event.beacons]);
-
-	async function saveLayout() {
-		setSavingLayout(true);
-		setError(null);
-		try {
-			await api.setEventBeacons(
-				event.id,
-				placements.map((beacon) => ({
-					beacon_id: beacon.beacon_id,
-					x: beacon.x,
-					y: beacon.y,
-					tx_power_override: beacon.tx_power_override ?? null,
-				})),
-			);
-			refresh();
-		} catch (err) {
-			setError(err instanceof ApiError ? err.message : "Unable to save layout");
-		} finally {
-			setSavingLayout(false);
-		}
-	}
 
 	async function deleteEvent() {
 		setError(null);
@@ -171,37 +135,85 @@ function EventDetailBody({
 			<div className="grid gap-6 lg:grid-cols-2">
 				<Card>
 					<CardHeader>
-						<div className="flex flex-wrap items-start justify-between gap-3">
-							<div>
-								<h2 className="font-semibold text-gray-900 dark:text-white">
-									Beacon placement
-								</h2>
-								<p className="text-gray-500 text-xs dark:text-gray-400">
-									Drag beacons or use the arrow keys. Snap: 0.5 m, shift = 2 m.
-								</p>
-							</div>
-							<Button
-								size="sm"
-								onClick={saveLayout}
-								disabled={!hasLayoutChanges || savingLayout}
-							>
-								{savingLayout ? "Saving…" : "Save layout"}
-							</Button>
-						</div>
+						<h2 className="font-semibold text-gray-900 dark:text-white">
+							Beacon locations
+						</h2>
+						<p className="text-gray-500 text-xs dark:text-gray-400">
+							GPS coordinates are confirmed by an admin from the mobile app while standing
+							near the beacon. Floor positions are assigned automatically.
+						</p>
 					</CardHeader>
 					<CardContent>
-						<BeaconPlacementGrid
-							widthM={event.floor_width_m}
-							heightM={event.floor_height_m}
-							beacons={placements}
-							onMove={(beaconId, x, y) =>
-								setPlacements((current) =>
-									current.map((beacon) =>
-										beacon.beacon_id === beaconId ? { ...beacon, x, y } : beacon,
-									),
-								)
-							}
-						/>
+						{event.beacons.length === 0 ? (
+							<EmptyState
+								title="No beacons attached"
+								description="Attach at least one beacon when creating or editing the event."
+							/>
+						) : (
+							<div className="space-y-3">
+								{event.beacons.map((beacon) => {
+									const confirmed =
+										beacon.latitude != null && beacon.longitude != null;
+									return (
+										<div
+											key={beacon.beacon_id}
+											className="rounded-lg border border-gray-200 p-3"
+										>
+											<div className="flex flex-wrap items-start justify-between gap-2">
+												<div>
+													<div className="font-medium text-sm text-gray-900">
+														{beacon.label}
+													</div>
+													<div className="font-mono text-xs text-gray-500">
+														{beacon.identity_key}
+													</div>
+												</div>
+												<Badge variant={confirmed ? "green" : "amber"}>
+													{confirmed ? "Location confirmed" : "Location missing"}
+												</Badge>
+											</div>
+											{confirmed ? (
+												<div className="mt-2 space-y-1 text-sm text-gray-600">
+													<div className="font-mono text-xs text-gray-700">
+														{beacon.latitude!.toFixed(6)},{" "}
+														{beacon.longitude!.toFixed(6)}
+													</div>
+													{beacon.location_accuracy_m != null ? (
+														<div className="text-xs text-gray-500">
+															Accuracy ±{beacon.location_accuracy_m.toFixed(0)} m
+															{beacon.location_source
+																? ` · ${beacon.location_source}`
+																: ""}
+														</div>
+													) : null}
+													{beacon.location_confirmed_at ? (
+														<div className="text-xs text-gray-500">
+															Confirmed{" "}
+															{formatDateTime(
+																beacon.location_confirmed_at,
+																event.timezone,
+															)}
+															{beacon.location_confirmed_by_name
+																? ` by ${beacon.location_confirmed_by_name}`
+																: ""}
+														</div>
+													) : null}
+												</div>
+											) : (
+												<p className="mt-2 text-xs text-gray-500">
+													Open this event in the mobile admin app and confirm the
+													beacon location while standing near it.
+												</p>
+											)}
+											<div className="mt-2 text-[11px] text-gray-400">
+												Automatic floor position: {beacon.x.toFixed(1)},{" "}
+												{beacon.y.toFixed(1)} m
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						)}
 					</CardContent>
 				</Card>
 
@@ -349,7 +361,6 @@ function EventDetailBody({
 				</p>
 			</Modal>
 
-			{savingLayout ? <Spinner label="Saving layout…" /> : null}
 
 			<div>
 				<Link to="/events" className="text-blue-600 text-sm hover:underline">

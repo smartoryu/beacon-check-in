@@ -58,6 +58,13 @@ export interface EventBeacon {
 	x: number;
 	y: number;
 	beacon_deleted_at?: string | null;
+	latitude?: number | null;
+	longitude?: number | null;
+	location_accuracy_m?: number | null;
+	location_source?: string | null;
+	location_confirmed_at?: string | null;
+	location_confirmed_by?: string | null;
+	location_confirmed_by_name?: string | null;
 }
 
 export interface Event {

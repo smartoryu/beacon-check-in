@@ -36,6 +36,8 @@ type EventRepository interface {
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	SetBeacons(ctx context.Context, eventID uuid.UUID, beacons []models.EventBeaconInput) error
 	EnsureActiveBeacons(ctx context.Context, ids []uuid.UUID) error
+	ConfirmBeaconLocation(ctx context.Context, eventID, beaconID, actorID uuid.UUID, req *models.ConfirmEventBeaconLocationRequest) (*models.EventBeacon, *models.EventBeaconLocationHistory, error)
+	ListBeaconLocationHistory(ctx context.Context, eventID, beaconID uuid.UUID) ([]models.EventBeaconLocationHistory, error)
 }
 
 type eventRepository struct {
@@ -108,10 +110,7 @@ func (r *eventRepository) Update(ctx context.Context, event *models.Event) error
 	}
 
 	if event.Beacons != nil {
-		if _, err := tx.Exec(ctx, `DELETE FROM `+models.EventBeaconTable+` WHERE event_id=$1`, event.ID); err != nil {
-			return err
-		}
-		if err := insertEventBeacons(ctx, tx, event.ID, inputsFromEventBeacons(event.Beacons)); err != nil {
+		if err := syncEventBeacons(ctx, tx, event.ID, inputsFromEventBeacons(event.Beacons)); err != nil {
 			return err
 		}
 	}
@@ -256,10 +255,7 @@ func (r *eventRepository) SetBeacons(ctx context.Context, eventID uuid.UUID, bea
 	if !exists {
 		return ErrNotFound
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM `+models.EventBeaconTable+` WHERE event_id=$1`, eventID); err != nil {
-		return err
-	}
-	if err := insertEventBeacons(ctx, tx, eventID, beacons); err != nil {
+	if err := syncEventBeacons(ctx, tx, eventID, beacons); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, `UPDATE `+models.EventTable+` SET updated_at=NOW() WHERE id=$1`, eventID); err != nil {
@@ -285,9 +281,12 @@ func (r *eventRepository) EnsureActiveBeacons(ctx context.Context, ids []uuid.UU
 func (r *eventRepository) loadBeacons(ctx context.Context, eventID uuid.UUID) ([]models.EventBeacon, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT b.id, b.identity_key, b.label, b.local_name, b.tx_power, eb.tx_power_override,
-		       eb.x, eb.y, b.deleted_at
+		       eb.x, eb.y, b.deleted_at, eb.latitude, eb.longitude, eb.location_accuracy_m,
+		       eb.location_source, eb.location_confirmed_at, eb.location_confirmed_by,
+		       u.display_name
 		FROM public.event_beacons eb
 		JOIN public.beacons b ON b.id = eb.beacon_id
+		LEFT JOIN public.users u ON u.id = eb.location_confirmed_by
 		WHERE eb.event_id = $1
 		ORDER BY b.label`, eventID)
 	if err != nil {
@@ -298,12 +297,145 @@ func (r *eventRepository) loadBeacons(ctx context.Context, eventID uuid.UUID) ([
 	var beacons []models.EventBeacon
 	for rows.Next() {
 		var item models.EventBeacon
-		if err := rows.Scan(&item.BeaconID, &item.IdentityKey, &item.Label, &item.LocalName, &item.TxPower, &item.TxPowerOverride, &item.X, &item.Y, &item.BeaconDeletedAt); err != nil {
+		if err := rows.Scan(&item.BeaconID, &item.IdentityKey, &item.Label, &item.LocalName, &item.TxPower, &item.TxPowerOverride, &item.X, &item.Y, &item.BeaconDeletedAt,
+			&item.Latitude, &item.Longitude, &item.LocationAccuracyM, &item.LocationSource,
+			&item.LocationConfirmedAt, &item.LocationConfirmedBy, &item.LocationConfirmedByName); err != nil {
 			return nil, err
 		}
 		beacons = append(beacons, item)
 	}
 	return beacons, rows.Err()
+}
+
+func syncEventBeacons(ctx context.Context, tx pgx.Tx, eventID uuid.UUID, beacons []models.EventBeaconInput) error {
+	ids := make([]uuid.UUID, 0, len(beacons))
+	for _, b := range beacons {
+		beaconID, err := uuid.FromString(b.BeaconID)
+		if err != nil {
+			return err
+		}
+		ids = append(ids, beaconID)
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM `+models.EventBeaconTable+` WHERE event_id=$1 AND NOT (beacon_id = ANY($2))`, eventID, ids); err != nil {
+		return err
+	}
+
+	for _, b := range beacons {
+		beaconID, err := uuid.FromString(b.BeaconID)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO `+models.EventBeaconTable+` (event_id, beacon_id, x, y, tx_power_override)
+			VALUES ($1,$2,$3,$4,$5)
+			ON CONFLICT (event_id, beacon_id) DO UPDATE
+			SET x=EXCLUDED.x, y=EXCLUDED.y, tx_power_override=EXCLUDED.tx_power_override`,
+			eventID, beaconID, b.X, b.Y, b.TxPowerOverride); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *eventRepository) ConfirmBeaconLocation(ctx context.Context, eventID, beaconID, actorID uuid.UUID, req *models.ConfirmEventBeaconLocationRequest) (*models.EventBeacon, *models.EventBeaconLocationHistory, error) {
+	source := req.Source
+	if source == "" {
+		source = "gps"
+	}
+	now := time.Now().UTC()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var eventExists bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM `+models.EventTable+` WHERE id=$1 AND deleted_at IS NULL)`, eventID).Scan(&eventExists); err != nil {
+		return nil, nil, err
+	}
+	if !eventExists {
+		return nil, nil, ErrNotFound
+	}
+
+	var attached bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM `+models.EventBeaconTable+` WHERE event_id=$1 AND beacon_id=$2)`, eventID, beaconID).Scan(&attached); err != nil {
+		return nil, nil, err
+	}
+	if !attached {
+		return nil, nil, ErrBeaconNotFound
+	}
+
+	if _, err := tx.Exec(ctx, `UPDATE `+models.EventBeaconTable+`
+		SET latitude=$3, longitude=$4, location_accuracy_m=$5, location_source=$6,
+		    location_confirmed_at=$7, location_confirmed_by=$8
+		WHERE event_id=$1 AND beacon_id=$2`,
+		eventID, beaconID, *req.Latitude, *req.Longitude, req.AccuracyM, source, now, actorID); err != nil {
+		return nil, nil, err
+	}
+
+	history := &models.EventBeaconLocationHistory{
+		EventID:    eventID,
+		BeaconID:   beaconID,
+		Latitude:   *req.Latitude,
+		Longitude:  *req.Longitude,
+		AccuracyM:  req.AccuracyM,
+		Source:     source,
+		RecordedBy: &actorID,
+		CreatedAt:  now,
+	}
+	if err := tx.QueryRow(ctx, `INSERT INTO public.event_beacon_location_history
+		(event_id, beacon_id, latitude, longitude, accuracy_m, source, recorded_by, created_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+		RETURNING id`,
+		eventID, beaconID, *req.Latitude, *req.Longitude, req.AccuracyM, source, actorID, now).Scan(&history.ID); err != nil {
+		return nil, nil, err
+	}
+	var actorName string
+	if err := tx.QueryRow(ctx, `SELECT display_name FROM public.users WHERE id=$1`, actorID).Scan(&actorName); err == nil {
+		history.RecordedByName = &actorName
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, nil, err
+	}
+
+	beacons, err := r.loadBeacons(ctx, eventID)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, beacon := range beacons {
+		if beacon.BeaconID == beaconID {
+			item := beacon
+			return &item, history, nil
+		}
+	}
+	return nil, history, nil
+}
+
+func (r *eventRepository) ListBeaconLocationHistory(ctx context.Context, eventID, beaconID uuid.UUID) ([]models.EventBeaconLocationHistory, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT h.id, h.event_id, h.beacon_id, h.latitude, h.longitude, h.accuracy_m,
+		       h.source, h.recorded_by, u.display_name, h.created_at
+		FROM public.event_beacon_location_history h
+		LEFT JOIN public.users u ON u.id = h.recorded_by
+		WHERE h.event_id=$1 AND h.beacon_id=$2
+		ORDER BY h.created_at DESC`, eventID, beaconID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []models.EventBeaconLocationHistory
+	for rows.Next() {
+		var item models.EventBeaconLocationHistory
+		if err := rows.Scan(&item.ID, &item.EventID, &item.BeaconID, &item.Latitude, &item.Longitude,
+			&item.AccuracyM, &item.Source, &item.RecordedBy, &item.RecordedByName, &item.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
 }
 
 func insertEventBeacons(ctx context.Context, tx pgx.Tx, eventID uuid.UUID, beacons []models.EventBeaconInput) error {

@@ -198,6 +198,35 @@ definitions:
     - identity_key
     - rssi_samples
     type: object
+  models.ConfirmEventBeaconLocationRequest:
+    properties:
+      accuracy_m:
+        minimum: 0
+        type: number
+      latitude:
+        maximum: 90
+        minimum: -90
+        type: number
+      longitude:
+        maximum: 180
+        minimum: -180
+        type: number
+      source:
+        enum:
+        - gps
+        - manual
+        type: string
+    required:
+    - latitude
+    - longitude
+    type: object
+  models.ConfirmEventBeaconLocationResponse:
+    properties:
+      beacon:
+        $ref: '#/definitions/models.EventBeacon'
+      history:
+        $ref: '#/definitions/models.EventBeaconLocationHistory'
+    type: object
   models.CreateAdminRequest:
     properties:
       email:
@@ -381,8 +410,22 @@ definitions:
         type: string
       label:
         type: string
+      latitude:
+        type: number
       local_name:
         type: string
+      location_accuracy_m:
+        type: number
+      location_confirmed_at:
+        type: string
+      location_confirmed_by:
+        type: string
+      location_confirmed_by_name:
+        type: string
+      location_source:
+        type: string
+      longitude:
+        type: number
       tx_power:
         type: integer
       tx_power_override:
@@ -404,6 +447,29 @@ definitions:
         type: number
     required:
     - beacon_id
+    type: object
+  models.EventBeaconLocationHistory:
+    properties:
+      accuracy_m:
+        type: number
+      beacon_id:
+        type: string
+      created_at:
+        type: string
+      event_id:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      recorded_by:
+        type: string
+      recorded_by_name:
+        type: string
+      source:
+        type: string
     type: object
   models.InitiateEmailVerificationRequest:
     properties:
@@ -2247,6 +2313,70 @@ paths:
       security:
       - BearerAuth: []
       summary: Replace event beacons
+      tags:
+      - Event Management
+  /api/v1/events/{id}/beacons/{beaconId}/location:
+    put:
+      consumes:
+      - application/json
+      description: Stores the admin-confirmed GPS location for one beacon in one event
+        and appends an audit-history entry.
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Beacon ID
+        in: path
+        name: beaconId
+        required: true
+        type: string
+      - description: GPS location
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ConfirmEventBeaconLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ConfirmEventBeaconLocationResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm an event beacon location
+      tags:
+      - Event Management
+  /api/v1/events/{id}/beacons/{beaconId}/location-history:
+    get:
+      description: Lists every confirmed GPS location change for one beacon in one
+        event.
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Beacon ID
+        in: path
+        name: beaconId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.EventBeaconLocationHistory'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Beacon location history
       tags:
       - Event Management
   /api/v1/events/{id}/checkins:

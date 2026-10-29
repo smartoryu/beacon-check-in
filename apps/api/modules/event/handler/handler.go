@@ -194,11 +194,85 @@ func (h *Handler) Active(c echo.Context) error {
 	return c.JSON(http.StatusOK, events)
 }
 
+// @Summary      Confirm an event beacon location
+// @Description  Stores the admin-confirmed GPS location for one beacon in one event and appends an audit-history entry.
+// @Tags         Event Management
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id        path      string                                      true  "Event ID"
+// @Param        beaconId  path      string                                      true  "Beacon ID"
+// @Param        body      body      models.ConfirmEventBeaconLocationRequest   true  "GPS location"
+// @Success      200       {object}  models.ConfirmEventBeaconLocationResponse
+// @Router       /api/v1/events/{id}/beacons/{beaconId}/location [put]
+func (h *Handler) ConfirmBeaconLocation(c echo.Context) error {
+	eventID, err := parseID(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid event ID"})
+	}
+	beaconID, err := parseID(c.Param("beaconId"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid beacon ID"})
+	}
+	actorID, err := currentUserID(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	var req models.ConfirmEventBeaconLocationRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+	}
+	if err := h.validator.Struct(req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]any{"error": "Validation failed", "details": apputils.ValidationErrorsToMap(err, req)})
+	}
+
+	beacon, history, err := h.service.ConfirmBeaconLocation(c.Request().Context(), eventID, beaconID, actorID, &req)
+	if err != nil {
+		return h.fail(c, err)
+	}
+	if beacon == nil || history == nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Unable to load the confirmed location"})
+	}
+	return c.JSON(http.StatusOK, models.ConfirmEventBeaconLocationResponse{
+		Beacon:  *beacon,
+		History: *history,
+	})
+}
+
+// @Summary      Beacon location history
+// @Description  Lists every confirmed GPS location change for one beacon in one event.
+// @Tags         Event Management
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id        path      string  true  "Event ID"
+// @Param        beaconId  path      string  true  "Beacon ID"
+// @Success      200       {array}   models.EventBeaconLocationHistory
+// @Router       /api/v1/events/{id}/beacons/{beaconId}/location-history [get]
+func (h *Handler) ListBeaconLocationHistory(c echo.Context) error {
+	eventID, err := parseID(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid event ID"})
+	}
+	beaconID, err := parseID(c.Param("beaconId"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid beacon ID"})
+	}
+	items, err := h.service.ListBeaconLocationHistory(c.Request().Context(), eventID, beaconID)
+	if err != nil {
+		return h.fail(c, err)
+	}
+	if items == nil {
+		items = []models.EventBeaconLocationHistory{}
+	}
+	return c.JSON(http.StatusOK, items)
+}
+
 func (h *Handler) fail(c echo.Context, err error) error {
 	switch {
 	case errors.Is(err, services.ErrEventNotFound):
 		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
-	case errors.Is(err, services.ErrNoBeacons), errors.Is(err, services.ErrBeaconUnavailable), errors.Is(err, services.ErrInvalidEvent):
+	case errors.Is(err, services.ErrNoBeacons), errors.Is(err, services.ErrBeaconUnavailable), errors.Is(err, services.ErrInvalidEvent), errors.Is(err, services.ErrBeaconNotInEvent):
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	default:
 		h.logger.Error("event operation failed", "error", err.Error())

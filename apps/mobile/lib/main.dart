@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
 
 import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tzdata.initializeTimeZones();
   await Hive.initFlutter();
   await Hive.openBox<dynamic>('checkin_queue');
   await Hive.openBox<dynamic>('event_cache');

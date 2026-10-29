@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
 import '../../../../core/config/app_config.dart';
@@ -121,6 +122,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           tooltip: 'Refresh scanner',
         ),
       ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/manage-events'),
+        icon: const Icon(Icons.event_note),
+        label: const Text('Events'),
+      ),
       body: RefreshIndicator(
         onRefresh: _refreshScanner,
         child: ListView(

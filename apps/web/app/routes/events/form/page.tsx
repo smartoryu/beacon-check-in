@@ -201,7 +201,7 @@ function EventForm({
 		<div className="space-y-6">
 			<PageHeader
 				title={isEdit ? "Edit event" : "Create event"}
-				description="An event must have at least one registered beacon. Positions can be fine-tuned on the event detail page."
+				description="An event must have at least one registered beacon. Floor positions are assigned automatically."
 			/>
 
 			{error ? <ErrorAlert message={error} /> : null}
@@ -344,8 +344,9 @@ function EventForm({
 						) : (
 							<div className="space-y-2">
 								<p className="text-gray-500 text-xs">
-									Click anywhere on a beacon card to attach or remove it. Positions are assigned
-									automatically; fine-tune them on the event detail page.
+									Click anywhere on a beacon card to attach or remove it. Floor positions
+									are assigned automatically. Confirm the real GPS location from the mobile
+									admin app.
 								</p>
 								{beacons.map((beacon) => {
 									const selected = Boolean(placements[beacon.id]);

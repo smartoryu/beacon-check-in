@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/auth_controller.dart';
+import '../../features/admin/events/presentation/admin_event_detail_screen.dart';
+import '../../features/admin/events/presentation/admin_event_form_screen.dart';
+import '../../features/admin/events/presentation/admin_event_list_screen.dart';
 import '../../features/admin/scanner/presentation/scanner_screen.dart';
 import '../../features/auth/presentation/change_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -29,7 +32,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return location == '/splash' ? null : '/splash';
       }
       if (!auth.isAuthenticated) {
-        return location == '/login' || location == '/register' ? null : '/login';
+        return location == '/login' || location == '/register'
+            ? null
+            : '/login';
       }
       if (auth.mustChangePassword) {
         return location == '/change-password' ? null : '/change-password';
@@ -41,9 +46,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return auth.isAdmin ? '/scanner' : '/events';
       }
       if (auth.isAdmin) {
-        return location == '/scanner' || location == '/profile' ? null : '/scanner';
+        final allowed =
+            location == '/scanner' ||
+            location == '/profile' ||
+            location.startsWith('/manage-events');
+        return allowed ? null : '/scanner';
       }
-      if (location == '/scanner') return '/events';
+      if (location == '/scanner' || location.startsWith('/manage-events')) {
+        return '/events';
+      }
       return null;
     },
     routes: [
@@ -51,10 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/splash',
         builder: (context, state) => const _SplashScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
@@ -66,6 +74,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/scanner',
         builder: (context, state) => const ScannerScreen(),
+      ),
+      GoRoute(
+        path: '/manage-events',
+        builder: (context, state) => const AdminEventListScreen(),
+        routes: [
+          GoRoute(
+            path: 'new',
+            builder: (context, state) => const AdminEventFormScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (context, state) =>
+                AdminEventDetailScreen(eventId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    AdminEventFormScreen(eventId: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/events',

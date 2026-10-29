@@ -384,18 +384,17 @@ The event detail page contains:
 
 - status, time window and timezone;
 - RSSI threshold and minimum beacon count;
-- **Beacon placement** grid;
+- **Beacon locations** card with GPS confirmation status;
 - **Triangulation** card;
 - **Check-ins** table with accepted/rejected tabs;
 - edit and delete actions.
 
-**Beacon placement**
+**Beacon locations**
 
-- Drag a beacon to move it.
-- Use arrow keys for fine control.
-- Snap is 0.5 m by default.
-- Hold Shift with arrow keys for 2 m steps.
-- Click **Save layout** to persist changes.
+- Shows each attached beacon with **Location confirmed** or **Location missing**.
+- Confirmed locations show latitude/longitude, accuracy, timestamp and the admin who confirmed it.
+- Confirming or updating a location is done from the mobile admin app while standing near the beacon; the web page is read-only for location.
+- The floor position (`x`/`y`) is assigned automatically and is shown for reference. It is not manually edited on the web page.
 
 **Triangulation**
 
@@ -492,7 +491,8 @@ The form lists all **active** registered beacons.
 - Click anywhere on a beacon card to attach or remove it; the whole card is the toggle.
 - At least one beacon is required.
 - Attaching a beacon assigns an automatic default `x`/`y` position inside the floor grid.
-- The event detail page can fine-tune positions by dragging; the create/edit form no longer asks for raw coordinates.
+- The create/edit form does not ask for raw coordinates, and the web event detail page no longer edits them manually.
+- The real GPS location is confirmed from the mobile admin app; history is kept per event + beacon.
 - The same beacon cannot be attached twice.
 
 **Per-beacon TX power override (`tx_power_override`)**
@@ -568,7 +568,32 @@ Bottom navigation: **Events**, **History**, **Profile**.
 
 ### Admin experience
 
-Bottom navigation: **Scanner**, **Profile**.
+Admin bottom navigation: **Scanner**, **Profile**. The scanner and event management screens are separate; use the floating action button to switch:
+
+- **Scanner → Events**
+- **Event Management → Scanner**
+
+**Event Management**
+
+- Lists all non-deleted events with status, time, beacon count, confirmed-location count and check-in count.
+- Pull to refresh.
+- Create a new event or open an existing one to edit it.
+- Supports the same fields as the web form: title, place, address, timezone, start/end, description, floor size, RSSI threshold, minimum beacons, coverage radius, path-loss exponent and beacon selection.
+- Selecting a beacon assigns an automatic default floor position. Floor-grid dragging remains on the web detail page.
+- Editing an event preserves already-confirmed GPS locations for beacons that remain attached.
+
+**Beacon location confirmation**
+
+Each event beacon card shows **Location confirmed** or **Location missing**.
+
+- **Confirm location**: opens a sheet that scans for that exact beacon identity and requests the phone’s GPS.
+- The confirm button is enabled only when the beacon is detected **and** a GPS position is available.
+- The admin must stand near the beacon while confirming.
+- The GPS coordinate, accuracy, timestamp and confirming admin are stored **per event + beacon**, because the same physical beacon can be reused at different events or venues.
+- **Update location** performs the same flow again; it is not a one-time action.
+- **History** lists every location change, newest first, with coordinates, accuracy, source, admin and timestamp.
+
+GPS confirmation is **audit-only** in this POC. It does not participate in user check-in validation; check-ins remain BLE/RSSI-based.
 
 **Beacon Scanner**
 
@@ -600,9 +625,9 @@ Bottom navigation: **Scanner**, **Profile**.
 - optional GATT details and read timestamp;
 - registration timestamps and the admin who registered it.
 
-**Bluetooth permissions**
+**Bluetooth and location permissions**
 
-The app asks for the permissions required by the platform. If Bluetooth is off or permission is denied, the status banner explains what to do. On iOS, the beacon MAC address is hidden by the operating system; the identity is always UUID + major + minor.
+The app asks for the permissions required by the platform. If Bluetooth is off or permission is denied, the status banner explains what to do. Android also requires Location permission and Location services for BLE scanning. Beacon location confirmation additionally requires GPS/Location permission on both Android and iOS. On iOS, the beacon MAC address is hidden by the operating system; the identity is always UUID + major + minor.
 
 ### Offline queue and sync
 

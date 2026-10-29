@@ -11,29 +11,30 @@ import 'api_exception.dart';
 
 class ApiClient {
   ApiClient({required TokenStorage tokenStorage, Dio? dio})
-      : _tokenStorage = tokenStorage,
-        _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: AppConfig.apiBaseUrl,
-                connectTimeout: const Duration(seconds: 12),
-                receiveTimeout: const Duration(seconds: 20),
-                sendTimeout: const Duration(seconds: 20),
-                headers: {
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'BeaconCheckIn/1.0 (mobile)',
-                },
-              ),
-            ) {
+    : _tokenStorage = tokenStorage,
+      _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: AppConfig.apiBaseUrl,
+              connectTimeout: const Duration(seconds: 12),
+              receiveTimeout: const Duration(seconds: 20),
+              sendTimeout: const Duration(seconds: 20),
+              headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'BeaconCheckIn/1.0 (mobile)',
+              },
+            ),
+          ) {
     _refreshDio = Dio(
       BaseOptions(
         baseUrl: AppConfig.apiBaseUrl,
         connectTimeout: const Duration(seconds: 12),
         receiveTimeout: const Duration(seconds: 20),
         headers: {
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'BeaconCheckIn/1.0 (mobile)',
-                },
+          'Content-Type': 'application/json',
+          'User-Agent': 'BeaconCheckIn/1.0 (mobile)',
+        },
       ),
     );
     _dio.interceptors.add(
@@ -178,6 +179,68 @@ class ApiClient {
     );
   }
 
+  Future<List<Event>> listEvents({String status = 'all'}) {
+    return _guard(
+      () => _dio.get<dynamic>('/events', queryParameters: {'status': status}),
+      (data) => (data as List<dynamic>)
+          .map((item) => Event.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(),
+    );
+  }
+
+  Future<Event> createEvent(EventInput input) {
+    return _guard(
+      () => _dio.post<dynamic>('/events', data: input.toJson()),
+      (data) => Event.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  Future<Event> updateEvent(String id, EventInput input) {
+    return _guard(
+      () => _dio.put<dynamic>('/events/$id', data: input.toJson()),
+      (data) => Event.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  Future<void> confirmBeaconLocation({
+    required String eventId,
+    required String beaconId,
+    required double latitude,
+    required double longitude,
+    double? accuracyM,
+  }) {
+    return _guard(
+      () => _dio.put<dynamic>(
+        '/events/$eventId/beacons/$beaconId/location',
+        data: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'accuracy_m': accuracyM,
+          'source': 'gps',
+        },
+      ),
+      (_) {},
+    );
+  }
+
+  Future<List<EventBeaconLocationHistory>> beaconLocationHistory({
+    required String eventId,
+    required String beaconId,
+  }) {
+    return _guard(
+      () => _dio.get<dynamic>(
+        '/events/$eventId/beacons/$beaconId/location-history',
+      ),
+      (data) => (data as List<dynamic>)
+          .map(
+            (item) => EventBeaconLocationHistory.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(),
+    );
+  }
+
   Future<Event> getEvent(String id) {
     return _guard(
       () => _dio.get<dynamic>('/events/$id'),
@@ -189,14 +252,19 @@ class ApiClient {
     return _guard(
       () => _dio.get<dynamic>('/beacons', queryParameters: {'status': status}),
       (data) => (data as List<dynamic>)
-          .map((item) => Beacon.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map(
+            (item) => Beacon.fromJson(Map<String, dynamic>.from(item as Map)),
+          )
           .toList(),
     );
   }
 
   Future<Map<String, BeaconLookupItem>> lookupBeacons(List<String> identities) {
     return _guard(
-      () => _dio.post<dynamic>('/beacons/lookup', data: {'identities': identities}),
+      () => _dio.post<dynamic>(
+        '/beacons/lookup',
+        data: {'identities': identities},
+      ),
       (data) {
         final map = Map<String, dynamic>.from(data as Map);
         final items = map['items'] as List<dynamic>? ?? const [];
@@ -209,7 +277,9 @@ class ApiClient {
             status: (json['status'] ?? 'unknown') as String,
             beacon: json['beacon'] == null
                 ? null
-                : Beacon.fromJson(Map<String, dynamic>.from(json['beacon'] as Map)),
+                : Beacon.fromJson(
+                    Map<String, dynamic>.from(json['beacon'] as Map),
+                  ),
           );
         }
         return result;
@@ -231,26 +301,32 @@ class ApiClient {
     List<int>? rssiSamples,
   }) {
     return _guard(
-      () => _dio.post<dynamic>('/beacons', data: {
-        'proximity_uuid': proximityUuid,
-        'major': major,
-        'minor': minor,
-        'label': label,
-        'local_name': localName,
-        'platform_device_id': platformDeviceId,
-        'device_address_type': deviceAddressType,
-        'tx_power': txPower,
-        'metadata': metadata,
-        'gatt_info': gattInfo,
-        'rssi_samples': rssiSamples,
-      }),
+      () => _dio.post<dynamic>(
+        '/beacons',
+        data: {
+          'proximity_uuid': proximityUuid,
+          'major': major,
+          'minor': minor,
+          'label': label,
+          'local_name': localName,
+          'platform_device_id': platformDeviceId,
+          'device_address_type': deviceAddressType,
+          'tx_power': txPower,
+          'metadata': metadata,
+          'gatt_info': gattInfo,
+          'rssi_samples': rssiSamples,
+        },
+      ),
       (data) => Beacon.fromJson(Map<String, dynamic>.from(data as Map)),
     );
   }
 
   Future<void> requestRestore(String beaconId, String reason) {
     return _guard(
-      () => _dio.post<dynamic>('/beacons/$beaconId/restore', data: {'reason': reason}),
+      () => _dio.post<dynamic>(
+        '/beacons/$beaconId/restore',
+        data: {'reason': reason},
+      ),
       (_) {},
     );
   }
@@ -272,7 +348,9 @@ class ApiClient {
           'device_info': deviceInfo,
         },
       ),
-      (data) => SubmitCheckinResponse.fromJson(Map<String, dynamic>.from(data as Map)),
+      (data) => SubmitCheckinResponse.fromJson(
+        Map<String, dynamic>.from(data as Map),
+      ),
     );
   }
 
@@ -280,7 +358,9 @@ class ApiClient {
     return _guard(
       () => _dio.get<dynamic>('/me/checkins'),
       (data) => (data as List<dynamic>)
-          .map((item) => Checkin.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map(
+            (item) => Checkin.fromJson(Map<String, dynamic>.from(item as Map)),
+          )
           .toList(),
     );
   }

@@ -35,15 +35,35 @@ type Event struct {
 }
 
 type EventBeacon struct {
-	BeaconID        uuid.UUID  `json:"beacon_id"`
-	IdentityKey     string     `json:"identity_key"`
-	Label           string     `json:"label"`
-	LocalName       *string    `json:"local_name"`
-	TxPower         *int       `json:"tx_power"`
-	TxPowerOverride *int       `json:"tx_power_override"`
-	X               float64    `json:"x"`
-	Y               float64    `json:"y"`
-	BeaconDeletedAt *time.Time `json:"beacon_deleted_at"`
+	BeaconID                uuid.UUID  `json:"beacon_id"`
+	IdentityKey             string     `json:"identity_key"`
+	Label                   string     `json:"label"`
+	LocalName               *string    `json:"local_name"`
+	TxPower                 *int       `json:"tx_power"`
+	TxPowerOverride         *int       `json:"tx_power_override"`
+	X                       float64    `json:"x"`
+	Y                       float64    `json:"y"`
+	BeaconDeletedAt         *time.Time `json:"beacon_deleted_at"`
+	Latitude                *float64   `json:"latitude"`
+	Longitude               *float64   `json:"longitude"`
+	LocationAccuracyM       *float64   `json:"location_accuracy_m"`
+	LocationSource          *string    `json:"location_source"`
+	LocationConfirmedAt     *time.Time `json:"location_confirmed_at"`
+	LocationConfirmedBy     *uuid.UUID `json:"location_confirmed_by"`
+	LocationConfirmedByName *string    `json:"location_confirmed_by_name"`
+}
+
+type EventBeaconLocationHistory struct {
+	ID             uuid.UUID  `json:"id"`
+	EventID        uuid.UUID  `json:"event_id"`
+	BeaconID       uuid.UUID  `json:"beacon_id"`
+	Latitude       float64    `json:"latitude"`
+	Longitude      float64    `json:"longitude"`
+	AccuracyM      *float64   `json:"accuracy_m"`
+	Source         string     `json:"source"`
+	RecordedBy     *uuid.UUID `json:"recorded_by"`
+	RecordedByName *string    `json:"recorded_by_name"`
+	CreatedAt      time.Time  `json:"created_at"`
 }
 
 type EventFilter struct {

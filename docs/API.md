@@ -641,12 +641,21 @@ Reject a request. Requires `super_admin`.
       "tx_power_override": null,
       "x": 4.5,
       "y": 2,
-      "beacon_deleted_at": null
+      "beacon_deleted_at": null,
+      "latitude": -6.2,
+      "longitude": 106.8,
+      "location_accuracy_m": 12.5,
+      "location_source": "gps",
+      "location_confirmed_at": "2026-01-01T09:30:00Z",
+      "location_confirmed_by": "01a164b6-...",
+      "location_confirmed_by_name": "Super Admin"
     }
   ],
   "checkin_count": 0
 }
 ```
+
+GPS confirmation is **audit-only** in this POC. It is not used to accept or reject user check-ins; check-in validation remains BLE/RSSI-based.
 
 ### `GET /events/active`
 
@@ -734,6 +743,82 @@ Soft-delete an event. Past check-ins remain.
 {
   "message": "Event deleted"
 }
+```
+
+### `PUT /events/{id}/beacons/{beaconId}/location`
+
+Confirm or update the GPS location of one beacon **for this event**. Requires `super_admin` or `admin`. The admin app only enables this after the target beacon is detected by the phone and a GPS position is available.
+
+```json
+{
+  "latitude": -6.200000,
+  "longitude": 106.800000,
+  "accuracy_m": 12.5,
+  "source": "gps"
+}
+```
+
+- `latitude`: `-90..90`
+- `longitude`: `-180..180`
+- `accuracy_m`: optional, must be ≥ 0
+- `source`: `gps` or `manual`; defaults to `gps`
+
+**Response**
+
+```json
+{
+  "beacon": {
+    "beacon_id": "01a167bc-...",
+    "label": "Lobby North",
+    "latitude": -6.2,
+    "longitude": 106.8,
+    "location_accuracy_m": 12.5,
+    "location_source": "gps",
+    "location_confirmed_at": "2026-01-01T09:30:00Z",
+    "location_confirmed_by_name": "Super Admin"
+  },
+  "history": {
+    "id": "01a167bc-...",
+    "event_id": "01a167bc-...",
+    "beacon_id": "01a167bc-...",
+    "latitude": -6.2,
+    "longitude": 106.8,
+    "accuracy_m": 12.5,
+    "source": "gps",
+    "recorded_by": "01a164b6-...",
+    "recorded_by_name": "Super Admin",
+    "created_at": "2026-01-01T09:30:00Z"
+  }
+}
+```
+
+Every confirmation appends an entry to the location history. Updating an event’s name, time or beacon positions does **not** erase the confirmed location.
+
+**Errors**
+
+- `400` invalid coordinates or beacon is not attached to the event;
+- `404` event not found;
+- `401/403` authentication/role failure.
+
+### `GET /events/{id}/beacons/{beaconId}/location-history`
+
+List the location-change history for one beacon in one event, newest first. Requires `super_admin` or `admin`.
+
+```json
+[
+  {
+    "id": "01a167bc-...",
+    "event_id": "01a167bc-...",
+    "beacon_id": "01a167bc-...",
+    "latitude": -6.2,
+    "longitude": 106.8,
+    "accuracy_m": 12.5,
+    "source": "gps",
+    "recorded_by": "01a164b6-...",
+    "recorded_by_name": "Super Admin",
+    "created_at": "2026-01-01T09:30:00Z"
+  }
+]
 ```
 
 ### `PUT /events/{id}/beacons`

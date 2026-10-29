@@ -49,4 +49,6 @@ func (m *EventModule) RegisterRoutes(e *echo.Group) {
 	g.PUT("/:id", m.handler.Update, adminOnly)
 	g.DELETE("/:id", m.handler.Delete, adminOnly)
 	g.PUT("/:id/beacons", m.handler.SetBeacons, adminOnly)
+	g.PUT("/:id/beacons/:beaconId/location", m.handler.ConfirmBeaconLocation, adminOnly)
+	g.GET("/:id/beacons/:beaconId/location-history", m.handler.ListBeaconLocationHistory, adminOnly)
 }

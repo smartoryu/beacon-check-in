@@ -34,6 +34,18 @@ type SetEventBeaconsRequest struct {
 	Beacons []EventBeaconInput `json:"beacons" validate:"required,min=1,dive"`
 }
 
+type ConfirmEventBeaconLocationRequest struct {
+	Latitude  *float64 `json:"latitude" validate:"required,gte=-90,lte=90"`
+	Longitude *float64 `json:"longitude" validate:"required,gte=-180,lte=180"`
+	AccuracyM *float64 `json:"accuracy_m,omitempty" validate:"omitempty,gte=0"`
+	Source    string   `json:"source,omitempty" validate:"omitempty,oneof=gps manual"`
+}
+
+type ConfirmEventBeaconLocationResponse struct {
+	Beacon  EventBeacon                `json:"beacon"`
+	History EventBeaconLocationHistory `json:"history"`
+}
+
 type ActiveEventsResponse struct {
 	Events []*Event `json:"events"`
 }

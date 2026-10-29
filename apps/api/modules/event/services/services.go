@@ -19,6 +19,7 @@ var (
 	ErrInvalidEvent      = errors.New("invalid event")
 	ErrNoBeacons         = errors.New("an event must have at least one beacon")
 	ErrBeaconUnavailable = errors.New("one or more beacons are not available")
+	ErrBeaconNotInEvent  = errors.New("beacon is not attached to this event")
 )
 
 type EventService struct {
@@ -132,6 +133,34 @@ func (s *EventService) SetBeacons(ctx context.Context, id uuid.UUID, req *models
 		return nil, err
 	}
 	return s.Get(ctx, id)
+}
+
+func (s *EventService) ConfirmBeaconLocation(ctx context.Context, eventID, beaconID, actorID uuid.UUID, req *models.ConfirmEventBeaconLocationRequest) (*models.EventBeacon, *models.EventBeaconLocationHistory, error) {
+	if req.Source == "" {
+		req.Source = "gps"
+	}
+	beacon, history, err := s.repo.ConfirmBeaconLocation(ctx, eventID, beaconID, actorID, req)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, nil, ErrEventNotFound
+		}
+		if errors.Is(err, repository.ErrBeaconNotFound) {
+			return nil, nil, ErrBeaconNotInEvent
+		}
+		return nil, nil, err
+	}
+	return beacon, history, nil
+}
+
+func (s *EventService) ListBeaconLocationHistory(ctx context.Context, eventID, beaconID uuid.UUID) ([]models.EventBeaconLocationHistory, error) {
+	items, err := s.repo.ListBeaconLocationHistory(ctx, eventID, beaconID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrEventNotFound
+		}
+		return nil, err
+	}
+	return items, nil
 }
 
 func (s *EventService) buildEvent(req *models.CreateEventRequest) (*models.Event, []uuid.UUID, error) {

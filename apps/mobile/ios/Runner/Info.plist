@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Beacon Check-In uses your location when an admin confirms a beacon's position for an event.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Beacon Check-In uses Bluetooth to scan for iBeacon devices and validate your check-in location.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>

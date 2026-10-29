@@ -42,6 +42,12 @@ firebase appdistribution:testers:add --group-alias testers you@example.com \
   --project beacon-check-in-4357e
 ```
 
+## Admin event management
+
+Admins can switch between **Beacon Scanner** and **Event Management** with the floating action button. Event Management supports creating/editing events and selecting beacons.
+
+Beacon GPS confirmation requires the selected beacon to be detected by the phone and a GPS position to be available. The location is stored per event + beacon; location changes are appended to an audit history.
+
 ## BLE permissions
 
 Android requires both **Nearby devices** and **Location** permission, and Location services must be turned on. The app uses RSSI for position estimation, so the manifest must not use `usesPermissionFlags="neverForLocation"` — Android can filter iBeacon advertisements when that flag is present.
