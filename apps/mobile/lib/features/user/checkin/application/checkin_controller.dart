@@ -16,6 +16,7 @@ import '../../../../core/offline/sync_worker.dart';
 class CheckinScanState {
   const CheckinScanState({
     this.scanning = false,
+    this.recording = false,
     this.secondsLeft = 8,
     this.discovered = const [],
     this.error,
@@ -23,6 +24,7 @@ class CheckinScanState {
   });
 
   final bool scanning;
+  final bool recording;
   final int secondsLeft;
   final List<DiscoveredBeacon> discovered;
   final String? error;
@@ -30,6 +32,7 @@ class CheckinScanState {
 
   CheckinScanState copyWith({
     bool? scanning,
+    bool? recording,
     int? secondsLeft,
     List<DiscoveredBeacon>? discovered,
     String? error,
@@ -37,6 +40,7 @@ class CheckinScanState {
     bool clearError = false,
   }) => CheckinScanState(
     scanning: scanning ?? this.scanning,
+    recording: recording ?? this.recording,
     secondsLeft: secondsLeft ?? this.secondsLeft,
     discovered: discovered ?? this.discovered,
     error: clearError ? null : (error ?? this.error),
@@ -79,6 +83,7 @@ class CheckinController extends ChangeNotifier {
     await _scanService.init();
     await _scanService.stop();
     _discovered.clear();
+    _simulated.clear();
     _seconds = 8;
     _state = const CheckinScanState(scanning: true);
     notifyListeners();
@@ -162,6 +167,16 @@ class CheckinController extends ChangeNotifier {
     await _scanService.stop();
     _state = _state.copyWith(scanning: false, secondsLeft: 0);
     _publish();
+    if (_state.discovered.isNotEmpty) {
+      // One-action flow: the user starts the check-in once, and the app records
+      // the result automatically after the scan window closes.
+      try {
+        await record();
+      } catch (error) {
+        _state = _state.copyWith(recording: false, error: error.toString());
+        notifyListeners();
+      }
+    }
   }
 
   Future<void> retry() => start();
@@ -186,6 +201,9 @@ class CheckinController extends ChangeNotifier {
       );
     }
     _publish();
+    if (_simulated.isNotEmpty) {
+      unawaited(record());
+    }
   }
 
   void _publish() {
@@ -203,6 +221,18 @@ class CheckinController extends ChangeNotifier {
       );
 
   Future<QueuedCheckin> record() async {
+    _state = _state.copyWith(recording: true, clearError: true);
+    notifyListeners();
+    try {
+      return await _record();
+    } catch (error) {
+      _state = _state.copyWith(recording: false, error: error.toString());
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<QueuedCheckin> _record() async {
     final all = {..._discovered, ..._simulated};
     final readings = <CheckinReadingInput>[];
     for (final beacon in event.beacons) {
@@ -243,7 +273,7 @@ class CheckinController extends ChangeNotifier {
       updatedAt: now,
     );
     await _queue.enqueue(item);
-    _state = _state.copyWith(recorded: item);
+    _state = _state.copyWith(recorded: item, recording: false);
     notifyListeners();
     unawaited(_syncWorker.syncNow());
     return item;

@@ -235,7 +235,7 @@ The server keeps both **accepted** and **rejected** attempts. Rejected attempts 
 
 ### 5. Offline-first means “record now, sync later”
 
-When the user taps **Record check-in**:
+When the user taps **Check in**, the app scans and then records automatically:
 
 1. The app immediately writes the attempt to a local Hive queue.
 2. The UI says the check-in is recorded.
@@ -541,13 +541,14 @@ Bottom navigation: **Events**, **History**, **Profile**.
 
 **Check-in flow**
 
-1. Tap **Check in**.
+1. Tap **Check in**. This is the only action required.
 2. The app scans for the event’s beacon identities for **8 seconds**.
 3. It keeps multiple RSSI samples per beacon and shows the median RSSI, sample count and measured power at 1 m.
-4. Tap **Record check-in**.
+4. When the scan finishes with at least one event beacon, the app records the check-in automatically.
 5. The check-in is written to the local Hive queue immediately.
 6. A confirmation dialog appears: **Check-in recorded**. The server result appears in History after sync.
 7. The sync worker sends it when online.
+8. If no event beacons are found, the screen offers **Scan again**.
 
 **History**
 

@@ -43,7 +43,7 @@ class _CheckinBody extends ConsumerStatefulWidget {
 
 class _CheckinBodyState extends ConsumerState<_CheckinBody> {
   late final CheckinController _controller;
-  bool _recording = false;
+  String? _shownRecordedId;
 
   @override
   void initState() {
@@ -60,7 +60,15 @@ class _CheckinBodyState extends ConsumerState<_CheckinBody> {
   }
 
   void _refresh() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    final recorded = _controller.state.recorded;
+    if (recorded != null && recorded.clientCheckinId != _shownRecordedId) {
+      _shownRecordedId = recorded.clientCheckinId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showRecordedDialog();
+      });
+    }
   }
 
   @override
@@ -70,50 +78,40 @@ class _CheckinBodyState extends ConsumerState<_CheckinBody> {
     super.dispose();
   }
 
-  Future<void> _record() async {
-    setState(() => _recording = true);
-    try {
-      await _controller.record();
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Check-in recorded'),
-          content: const Text(
-            'Your check-in is saved on this device. It will be validated and synced automatically when the API is reachable.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.go('/history');
-              },
-              child: const Text('View history'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-              child: const Text('Done'),
-            ),
-          ],
+  Future<void> _showRecordedDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Check-in recorded'),
+        content: const Text(
+          'Your check-in is saved on this device. It will be validated and synced automatically when the API is reachable.',
         ),
-      );
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
-      }
-    } finally {
-      if (mounted) setState(() => _recording = false);
-    }
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.go('/history');
+            },
+            child: const Text('View history'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = _controller.state;
     final hasReadings = state.discovered.isNotEmpty;
+    final canRetry =
+        !state.scanning && !state.recording && state.recorded == null;
     return RefreshIndicator(
       onRefresh: _controller.start,
       child: ListView(
@@ -144,10 +142,14 @@ class _CheckinBodyState extends ConsumerState<_CheckinBody> {
                     LinearProgressIndicator(value: state.secondsLeft / 8),
                     const SizedBox(height: 8),
                     Text('Scanning for event beacons… ${state.secondsLeft}s'),
+                  ] else if (state.recording) ...[
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 8),
+                    const Text('Scan complete. Recording your check-in…'),
                   ] else
                     Text(
                       hasReadings
-                          ? 'Scan complete. Review the beacons below and record your check-in.'
+                          ? 'Check-in recorded. It will sync automatically in the background.'
                           : 'No event beacons found. Move closer and scan again.',
                     ),
                   const SizedBox(height: 8),
@@ -194,23 +196,17 @@ class _CheckinBodyState extends ConsumerState<_CheckinBody> {
               icon: const Icon(Icons.science_outlined),
               label: const Text('Simulate beacon readings (debug)'),
             ),
-          const SizedBox(height: 8),
-          FilledButton.icon(
-            onPressed: state.scanning || !hasReadings || _recording
-                ? null
-                : _record,
-            icon: _recording
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.how_to_reg),
-            label: Text(_recording ? 'Recording…' : 'Record check-in'),
-          ),
+          if (canRetry) ...[
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: _controller.start,
+              icon: const Icon(Icons.refresh),
+              label: Text(hasReadings ? 'Try again' : 'Scan again'),
+            ),
+          ],
           const SizedBox(height: 8),
           Text(
-            'Recorded locally first — the server result appears in History after sync.',
+            'The scan and check-in happen in one step. The result is saved locally first, then synced when online.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
