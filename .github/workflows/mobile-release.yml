@@ -1,0 +1,255 @@
+name: Mobile Release
+
+on:
+  push:
+    tags: ["mobile-v*"]
+  workflow_dispatch:
+    inputs:
+      build_name:
+        description: "Version name. Defaults to the tag without 'mobile-v', else the pubspec version."
+        required: false
+        type: string
+      build_number:
+        description: "Version code. Defaults to the workflow run number."
+        required: false
+        type: string
+      distribute:
+        description: "Where to publish the APK"
+        required: true
+        default: artifact
+        type: choice
+        options: [artifact, firebase, both]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Keep in sync with mobile-ci.yml.
+  FLUTTER_VERSION: "3.47.6"
+  ARTIFACT_NAME: beacon-check-in-apk
+
+jobs:
+  preflight:
+    name: Check distribution secrets
+    runs-on: ubuntu-24.04
+    outputs:
+      firebase_ready: ${{ steps.check.outputs.firebase_ready }}
+    steps:
+      - name: Check Firebase credentials
+        id: check
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "firebase_ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "firebase_ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Firebase distribution skipped: set FIREBASE_SERVICE_ACCOUNT (service-account JSON, raw or base64) first."
+          fi
+
+  build:
+    name: Build release APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      distribute: ${{ steps.target.outputs.distribute }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve distribution target
+        id: target
+        env:
+          MODE: ${{ inputs.distribute }}
+        run: |
+          set -euo pipefail
+          case "${MODE:-artifact}" in
+            firebase|both) echo "distribute=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "distribute=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Resolve build version
+        id: version
+        env:
+          INPUT_NAME: ${{ inputs.build_name }}
+          INPUT_NUMBER: ${{ inputs.build_number }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          if [ -n "$INPUT_NAME" ]; then
+            name="$INPUT_NAME"
+          elif [ "${REF_NAME#mobile-v}" != "$REF_NAME" ]; then
+            name="${REF_NAME#mobile-v}"
+          else
+            name="$(sed -n 's/^version: *\([0-9][^+ ]*\).*/\1/p' apps/mobile/pubspec.yaml | head -1)"
+          fi
+          if [ -z "$name" ]; then
+            echo "Could not resolve a version name" >&2
+            exit 1
+          fi
+          number="${INPUT_NUMBER:-$RUN_NUMBER}"
+          echo "version=$name" >> "$GITHUB_OUTPUT"
+          echo "build_number=$number" >> "$GITHUB_OUTPUT"
+          echo "APP_VERSION=$name" >> "$GITHUB_ENV"
+          echo "APP_BUILD_NUMBER=$number" >> "$GITHUB_ENV"
+          echo "Building $name+$number"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Write dart-define env file
+        env:
+          API_BASE_URL: ${{ vars.MOBILE_API_BASE_URL || 'https://beacon-check-in-api.playground.my.id/api/v1' }}
+        run: |
+          set -euo pipefail
+          cat > apps/mobile/.env <<EOF
+          API_BASE_URL=$API_BASE_URL
+          ENABLE_DEBUG_SCANNER=false
+          EOF
+          echo "API_BASE_URL=$API_BASE_URL"
+
+      - name: Build release APK
+        working-directory: apps/mobile
+        run: ./scripts/build-apk.sh
+
+      - name: Collect APK and checksums
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: |
+          set -euo pipefail
+          apk="apps/mobile/build/app/outputs/flutter-apk/app-release.apk"
+          test -f "$apk"
+          mkdir -p dist
+          cp "$apk" "dist/beacon-check-in-${VERSION}+${BUILD_NUMBER}.apk"
+          cp "$apk" dist/app-release.apk
+          cd dist
+          sha256sum ./*.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          ls -lh
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: beacon-check-in-apk
+          path: |
+            dist/*.apk
+            dist/SHA256SUMS.txt
+          retention-days: 90
+
+  publish-release:
+    name: Attach APK to GitHub Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/mobile-v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: dist
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          BUILD_NUMBER: ${{ needs.build.outputs.build_number }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.apk dist/SHA256SUMS.txt --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.apk dist/SHA256SUMS.txt \
+              --title "Mobile ${VERSION}+${BUILD_NUMBER}" \
+              --notes "Beacon Check-In Android build ${VERSION}+${BUILD_NUMBER}.
+
+          Debug-signed APK for testing only - it is not suitable for Google Play, and it cannot be upgraded over a differently-signed build. See SHA256SUMS.txt for checksums." \
+              --verify-tag
+          fi
+
+  distribute:
+    name: Distribute to Firebase App Distribution
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [preflight, build]
+    if: >
+      needs.preflight.outputs.firebase_ready == 'true' &&
+      needs.build.outputs.distribute == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: apps/mobile/build/app/outputs/flutter-apk
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Prepare Firebase credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          umask 077
+          sa="$RUNNER_TEMP/firebase-service-account.json"
+          # Accepts either raw JSON or base64-encoded JSON, so it can be stored
+          # as a single-line secret.
+          if printf '%s' "$FIREBASE_SERVICE_ACCOUNT" | head -c 1 | grep -q '{'; then
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$sa"
+          else
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" | base64 --decode > "$sa"
+          fi
+          # Fail here with a clear message instead of deep inside the CLI.
+          node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' "$sa"
+          echo "FIREBASE_SERVICE_ACCOUNT_FILE=$sa" >> "$GITHUB_ENV"
+
+      - name: Write Firebase env file
+        env:
+          API_BASE_URL: ${{ vars.MOBILE_API_BASE_URL || 'https://beacon-check-in-api.playground.my.id/api/v1' }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID || 'beacon-check-in-4357e' }}
+          FIREBASE_ANDROID_APP_ID: ${{ vars.FIREBASE_ANDROID_APP_ID || '1:842871360971:android:c771fa381b2bb7bea2fa4e' }}
+          FIREBASE_TESTERS: ${{ vars.FIREBASE_TESTERS }}
+          FIREBASE_TESTER_GROUPS: ${{ vars.FIREBASE_TESTER_GROUPS || 'testers' }}
+        run: |
+          set -euo pipefail
+          {
+            echo "API_BASE_URL=$API_BASE_URL"
+            echo "FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID"
+            echo "FIREBASE_ANDROID_APP_ID=$FIREBASE_ANDROID_APP_ID"
+            echo "FIREBASE_TESTERS=$FIREBASE_TESTERS"
+            echo "FIREBASE_TESTER_GROUPS=$FIREBASE_TESTER_GROUPS"
+          } > apps/mobile/.env
+
+      - name: Upload to Firebase App Distribution
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          BUILD_NUMBER: ${{ needs.build.outputs.build_number }}
+        run: |
+          set -euo pipefail
+          export RELEASE_NOTES="Beacon Check-In ${VERSION}+${BUILD_NUMBER} (commit ${GITHUB_SHA:0:7} on ${GITHUB_REF_NAME})"
+          SKIP_BUILD=1 ./apps/mobile/scripts/distribute.sh
